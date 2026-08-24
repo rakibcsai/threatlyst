@@ -219,3 +219,6 @@ __marimo__/
 
 # Environment variables and secrets
 .env
+
+# ML model artifacts
+app/ai/*.joblib
