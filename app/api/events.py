@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import SessionLocal
+from app.core.rbac import require_roles
 
 from app.models.security_event import SecurityEvent
 from app.models.full_event_response import FullEventResponse
@@ -15,6 +16,7 @@ from app.services.dashboard_service import get_dashboard_stats
 from app.db.event_repository import create_event
 from app.db.analysis_repository import create_analysis_result
 from app.db.ai_analysis_repository import create_ai_analysis
+from app.db.user import UserDB
 
 
 router = APIRouter()
@@ -39,7 +41,15 @@ router = APIRouter()
         }
     },
 )
-def receive_event(event: SecurityEvent):
+def receive_event(
+    event: SecurityEvent,
+    current_user: UserDB = Depends(
+        require_roles(
+            "admin",
+            "analyst",
+        )
+    ),
+):
 
     rule_analysis = analyze_event(event)
     ai_analysis = analyze_with_ai(event)
@@ -95,7 +105,15 @@ def receive_event(event: SecurityEvent):
 
 
 @router.get("/api/events")
-def list_events():
+def list_events(
+    current_user: UserDB = Depends(
+        require_roles(
+            "admin",
+            "analyst",
+            "viewer",
+        )
+    ),
+):
 
     return get_events()
 
@@ -104,6 +122,14 @@ def list_events():
     "/api/dashboard/stats",
     response_model=DashboardStats,
 )
-def dashboard_stats():
+def dashboard_stats(
+    current_user: UserDB = Depends(
+        require_roles(
+            "admin",
+            "analyst",
+            "viewer",
+        )
+    ),
+):
 
     return get_dashboard_stats()

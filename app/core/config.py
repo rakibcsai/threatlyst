@@ -5,8 +5,8 @@ class Settings(BaseSettings):
     """
     Central application configuration for ThreatLyst.
 
-    Sensitive values such as database passwords are loaded
-    from environment variables or the local .env file.
+    Sensitive values such as database passwords and JWT secrets
+    are loaded from environment variables or the local .env file.
     """
 
     # ---------------------------------------------------------
@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     db_name: str = "threatlyst"
     db_user: str = "threatlyst_app"
     db_password: str = ""
+
+    # ---------------------------------------------------------
+    # Authentication / JWT
+    # ---------------------------------------------------------
+
+    jwt_secret_key: str = ""
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60
 
     # ---------------------------------------------------------
     # Pydantic Settings
