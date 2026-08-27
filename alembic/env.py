@@ -13,6 +13,7 @@ from app.db.api_key import APIKeyDB
 from app.db.alert import AlertDB
 from app.db.incident import IncidentDB
 from app.db.threat_indicator import ThreatIndicatorDB
+from app.db.mitre_technique import MITRETechniqueDB
 
 config = context.config
 
