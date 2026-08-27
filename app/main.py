@@ -7,6 +7,7 @@ from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.incidents import router as incidents_router
 from app.api.ingest import router as ingest_router
+from app.api.threat_intelligence import router as threat_intelligence_router
 
 
 app = FastAPI(
@@ -25,6 +26,7 @@ app.include_router(events_router)
 app.include_router(ingest_router)
 app.include_router(alerts_router)
 app.include_router(incidents_router)
+app.include_router(threat_intelligence_router)
 app.include_router(health_router)
 
 

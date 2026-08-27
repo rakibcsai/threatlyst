@@ -12,6 +12,7 @@ from app.db.user import UserDB
 from app.db.api_key import APIKeyDB
 from app.db.alert import AlertDB
 from app.db.incident import IncidentDB
+from app.db.threat_indicator import ThreatIndicatorDB
 
 config = context.config
 
