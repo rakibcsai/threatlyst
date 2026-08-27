@@ -10,6 +10,7 @@ from app.db.analysis_result import AnalysisResultDB
 from app.db.ai_analysis import AIAnalysisDB
 from app.db.user import UserDB
 from app.db.api_key import APIKeyDB
+from app.db.alert import AlertDB
 
 config = context.config
 
