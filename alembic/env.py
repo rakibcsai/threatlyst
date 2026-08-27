@@ -9,6 +9,7 @@ from app.db.security_event import SecurityEventDB
 from app.db.analysis_result import AnalysisResultDB
 from app.db.ai_analysis import AIAnalysisDB
 from app.db.user import UserDB
+from app.db.api_key import APIKeyDB
 
 config = context.config
 

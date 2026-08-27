@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+import hashlib
+import secrets
 
 import jwt
 from pwdlib import PasswordHash
@@ -70,3 +72,33 @@ def decode_access_token(token: str) -> dict:
         settings.jwt_secret_key,
         algorithms=[settings.jwt_algorithm],
     )
+
+
+def generate_api_key() -> tuple[str, str]:
+    """
+    Generate a new ThreatLyst API key.
+
+    Returns:
+    - the full raw API key
+    - a short prefix used for identification
+    """
+
+    secret = secrets.token_urlsafe(32)
+
+    api_key = f"tl_live_{secret}"
+
+    key_prefix = api_key[:16]
+
+    return api_key, key_prefix
+
+
+def hash_api_key(api_key: str) -> str:
+    """
+    Create a SHA-256 hash of an API key.
+
+    Only this hash is stored in PostgreSQL.
+    """
+
+    return hashlib.sha256(
+        api_key.encode("utf-8")
+    ).hexdigest()
