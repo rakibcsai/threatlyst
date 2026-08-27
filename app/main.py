@@ -5,6 +5,7 @@ from app.api.api_keys import router as api_keys_router
 from app.api.auth import router as auth_router
 from app.api.events import router as events_router
 from app.api.health import router as health_router
+from app.api.incidents import router as incidents_router
 from app.api.ingest import router as ingest_router
 
 
@@ -23,6 +24,7 @@ app.include_router(api_keys_router)
 app.include_router(events_router)
 app.include_router(ingest_router)
 app.include_router(alerts_router)
+app.include_router(incidents_router)
 app.include_router(health_router)
 
 
