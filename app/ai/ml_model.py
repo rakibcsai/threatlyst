@@ -1,5 +1,5 @@
-import numpy as np
 import joblib
+import numpy as np
 from sklearn.ensemble import IsolationForest
 from typing import List
 
@@ -11,6 +11,10 @@ class ThreatDetectionModel:
     The model is trained primarily on NORMAL operational
     security events. Events that significantly differ from
     the learned normal baseline are classified as anomalies.
+
+    The persisted model artifact contains both the trained
+    estimator and lifecycle metadata so compatibility can
+    be validated when the model is loaded.
     """
 
     def __init__(self):
@@ -21,12 +25,17 @@ class ThreatDetectionModel:
         )
 
         self.is_trained = False
+        self.metadata: dict = {}
 
     # ==========================================================
     # TRAIN
     # ==========================================================
 
-    def train(self, training_data: List[List[float]]) -> None:
+    def train(
+        self,
+        training_data: List[List[float]],
+        metadata: dict | None = None,
+    ) -> None:
         """
         Train the Isolation Forest model using normal
         operational security-event feature vectors.
@@ -51,6 +60,14 @@ class ThreatDetectionModel:
 
         self.is_trained = True
 
+        self.metadata = {
+            "training_samples": int(data.shape[0]),
+            "feature_count": int(data.shape[1]),
+        }
+
+        if metadata:
+            self.metadata.update(metadata)
+
     # ==========================================================
     # PREDICT
     # ==========================================================
@@ -66,6 +83,20 @@ class ThreatDetectionModel:
                 "ML model has not been trained yet."
             )
 
+        expected_feature_count = self.metadata.get(
+            "feature_count"
+        )
+
+        if (
+            expected_feature_count is not None
+            and len(features) != expected_feature_count
+        ):
+            raise ValueError(
+                "Feature count mismatch. "
+                f"Expected {expected_feature_count}, "
+                f"received {len(features)}."
+            )
+
         data = np.array(
             features,
             dtype=float,
@@ -73,7 +104,9 @@ class ThreatDetectionModel:
 
         prediction = self.model.predict(data)[0]
 
-        anomaly_score = self.model.decision_function(data)[0]
+        anomaly_score = self.model.decision_function(
+            data
+        )[0]
 
         return {
             "prediction": (
@@ -90,7 +123,7 @@ class ThreatDetectionModel:
 
     def save(self, path: str) -> None:
         """
-        Save the trained Isolation Forest model.
+        Save the trained model together with metadata.
         """
 
         if not self.is_trained:
@@ -98,8 +131,13 @@ class ThreatDetectionModel:
                 "Cannot save an untrained model."
             )
 
+        artifact = {
+            "model": self.model,
+            "metadata": self.metadata,
+        }
+
         joblib.dump(
-            self.model,
+            artifact,
             path,
         )
 
@@ -109,12 +147,42 @@ class ThreatDetectionModel:
 
     def load(self, path: str) -> None:
         """
-        Load a previously trained Isolation Forest model.
+        Load a persisted ThreatLyst model artifact.
+
+        Legacy model files containing only the sklearn
+        estimator are also supported for compatibility.
         """
 
-        self.model = joblib.load(path)
+        artifact = joblib.load(path)
+
+        if (
+            isinstance(artifact, dict)
+            and "model" in artifact
+        ):
+            self.model = artifact["model"]
+            self.metadata = artifact.get(
+                "metadata",
+                {},
+            )
+
+        else:
+            # Backward compatibility with older ThreatLyst
+            # artifacts that stored only the estimator.
+            self.model = artifact
+            self.metadata = {}
 
         self.is_trained = True
+
+    # ==========================================================
+    # METADATA
+    # ==========================================================
+
+    def get_metadata(self) -> dict:
+        """
+        Return metadata stored with the model artifact.
+        """
+
+        return dict(self.metadata)
 
 
 # ==============================================================
