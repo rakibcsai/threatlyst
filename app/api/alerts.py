@@ -9,6 +9,7 @@ from app.db.alert_repository import (
     get_all_alerts,
     update_alert,
 )
+from app.db.notification_repository import create_notification
 from app.db.user import UserDB
 
 from app.models.alert import (
@@ -16,6 +17,7 @@ from app.models.alert import (
     AlertResponse,
     AlertUpdate,
 )
+from app.models.notification import NotificationCreate
 
 from app.services.audit_service import log_user_action
 
@@ -49,8 +51,8 @@ def create_new_alert(
             alert=alert,
         )
 
-        # Materialize the response before the audit
-        # commit can expire the ORM instance.
+        # Materialize the response before additional commits
+        # can expire the SQLAlchemy ORM instance.
         response = AlertResponse.model_validate(
             db_alert
         )
@@ -68,6 +70,23 @@ def create_new_alert(
                 f"and status '{response.status}'."
             ),
             request=request,
+        )
+
+        create_notification(
+            db=db,
+            notification=NotificationCreate(
+                user_id=response.assigned_to_user_id,
+                notification_type="alert_created",
+                title=f"New Alert: {response.title}",
+                message=(
+                    f"A {response.severity} severity alert "
+                    f"has been created with status "
+                    f"'{response.status}'."
+                ),
+                severity=response.severity,
+                resource_type="alert",
+                resource_id=str(response.id),
+            ),
         )
 
         return response
@@ -165,8 +184,7 @@ def modify_alert(
                 detail="Alert not found.",
             )
 
-        # Materialize the response before the audit
-        # commit can expire the ORM instance.
+        # Materialize the response before additional commits.
         response = AlertResponse.model_validate(
             alert
         )
@@ -187,6 +205,23 @@ def modify_alert(
                 f"Changes: {changed_fields}"
             ),
             request=request,
+        )
+
+        create_notification(
+            db=db,
+            notification=NotificationCreate(
+                user_id=response.assigned_to_user_id,
+                notification_type="alert_updated",
+                title=f"Alert Updated: {response.title}",
+                message=(
+                    f"Alert '{response.title}' was updated. "
+                    f"Current status: '{response.status}'. "
+                    f"Changes: {changed_fields}"
+                ),
+                severity=response.severity,
+                resource_type="alert",
+                resource_id=str(response.id),
+            ),
         )
 
         return response

@@ -9,6 +9,7 @@ from app.db.incident_repository import (
     get_incident_by_id,
     update_incident,
 )
+from app.db.notification_repository import create_notification
 from app.db.user import UserDB
 
 from app.models.incident import (
@@ -16,6 +17,7 @@ from app.models.incident import (
     IncidentResponse,
     IncidentUpdate,
 )
+from app.models.notification import NotificationCreate
 
 from app.services.audit_service import log_user_action
 
@@ -50,6 +52,7 @@ def create_new_incident(
             created_by_user_id=current_user.id,
         )
 
+        # Materialize the response before additional commits.
         response = IncidentResponse.model_validate(
             db_incident
         )
@@ -67,6 +70,23 @@ def create_new_incident(
                 f"and status '{response.status}'."
             ),
             request=request,
+        )
+
+        create_notification(
+            db=db,
+            notification=NotificationCreate(
+                user_id=response.assigned_to_user_id,
+                notification_type="incident_created",
+                title=f"New Incident: {response.title}",
+                message=(
+                    f"A {response.severity} severity incident "
+                    f"has been created with status "
+                    f"'{response.status}'."
+                ),
+                severity=response.severity,
+                resource_type="incident",
+                resource_id=str(response.id),
+            ),
         )
 
         return response
@@ -164,6 +184,7 @@ def modify_incident(
                 detail="Incident not found.",
             )
 
+        # Materialize the response before additional commits.
         response = IncidentResponse.model_validate(
             incident
         )
@@ -184,6 +205,23 @@ def modify_incident(
                 f"Changes: {changed_fields}"
             ),
             request=request,
+        )
+
+        create_notification(
+            db=db,
+            notification=NotificationCreate(
+                user_id=response.assigned_to_user_id,
+                notification_type="incident_updated",
+                title=f"Incident Updated: {response.title}",
+                message=(
+                    f"Incident '{response.title}' was updated. "
+                    f"Current status: '{response.status}'. "
+                    f"Changes: {changed_fields}"
+                ),
+                severity=response.severity,
+                resource_type="incident",
+                resource_id=str(response.id),
+            ),
         )
 
         return response
