@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.core.database import SessionLocal
 from app.core.rbac import require_roles
@@ -17,6 +17,8 @@ from app.models.alert import (
     AlertUpdate,
 )
 
+from app.services.audit_service import log_user_action
+
 
 router = APIRouter(
     prefix="/api/alerts",
@@ -30,6 +32,7 @@ router = APIRouter(
 )
 def create_new_alert(
     alert: AlertCreate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -41,10 +44,33 @@ def create_new_alert(
     db = SessionLocal()
 
     try:
-        return create_alert(
+        db_alert = create_alert(
             db=db,
             alert=alert,
         )
+
+        # Materialize the response before the audit
+        # commit can expire the ORM instance.
+        response = AlertResponse.model_validate(
+            db_alert
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="alert_created",
+            resource_type="alert",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Created alert '{response.title}' "
+                f"with severity '{response.severity}' "
+                f"and status '{response.status}'."
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()
@@ -115,6 +141,7 @@ def get_alert(
 def modify_alert(
     alert_id: int,
     update: AlertUpdate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -138,7 +165,31 @@ def modify_alert(
                 detail="Alert not found.",
             )
 
-        return alert
+        # Materialize the response before the audit
+        # commit can expire the ORM instance.
+        response = AlertResponse.model_validate(
+            alert
+        )
+
+        changed_fields = update.model_dump(
+            exclude_unset=True
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="alert_updated",
+            resource_type="alert",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Updated alert '{response.title}'. "
+                f"Changes: {changed_fields}"
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()

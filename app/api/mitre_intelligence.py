@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import SessionLocal
@@ -18,6 +18,8 @@ from app.models.mitre_technique import (
     MITRETechniqueUpdate,
 )
 
+from app.services.audit_service import log_user_action
+
 
 router = APIRouter(
     prefix="/api/mitre",
@@ -36,6 +38,7 @@ router = APIRouter(
 )
 def create_technique(
     technique: MITRETechniqueCreate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -47,10 +50,31 @@ def create_technique(
     db = SessionLocal()
 
     try:
-        return create_mitre_technique(
+        db_technique = create_mitre_technique(
             db=db,
             technique=technique,
         )
+
+        response = MITRETechniqueResponse.model_validate(
+            db_technique
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="mitre_technique_created",
+            resource_type="mitre_technique",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Created MITRE technique "
+                f"'{response.technique_id} - {response.name}' "
+                f"for tactic '{response.tactic}'."
+            ),
+            request=request,
+        )
+
+        return response
 
     except IntegrityError:
         db.rollback()
@@ -132,6 +156,7 @@ def get_technique(
 def modify_technique(
     technique_db_id: int,
     update: MITRETechniqueUpdate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -155,7 +180,30 @@ def modify_technique(
                 detail="MITRE technique not found.",
             )
 
-        return technique
+        response = MITRETechniqueResponse.model_validate(
+            technique
+        )
+
+        changed_fields = update.model_dump(
+            exclude_unset=True
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="mitre_technique_updated",
+            resource_type="mitre_technique",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Updated MITRE technique "
+                f"'{response.technique_id} - {response.name}'. "
+                f"Changes: {changed_fields}"
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()

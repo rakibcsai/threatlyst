@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 
 from app.core.database import SessionLocal
@@ -18,6 +18,8 @@ from app.models.threat_indicator import (
     ThreatIndicatorUpdate,
 )
 
+from app.services.audit_service import log_user_action
+
 
 router = APIRouter(
     prefix="/api/threat-intelligence",
@@ -36,6 +38,7 @@ router = APIRouter(
 )
 def create_indicator(
     indicator: ThreatIndicatorCreate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -47,10 +50,32 @@ def create_indicator(
     db = SessionLocal()
 
     try:
-        return create_threat_indicator(
+        db_indicator = create_threat_indicator(
             db=db,
             indicator=indicator,
         )
+
+        response = ThreatIndicatorResponse.model_validate(
+            db_indicator
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="threat_indicator_created",
+            resource_type="threat_indicator",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Created threat indicator "
+                f"'{response.indicator_value}' "
+                f"of type '{response.indicator_type}' "
+                f"with severity '{response.severity}'."
+            ),
+            request=request,
+        )
+
+        return response
 
     except IntegrityError:
         db.rollback()
@@ -132,6 +157,7 @@ def get_indicator(
 def modify_indicator(
     indicator_id: int,
     update: ThreatIndicatorUpdate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -155,7 +181,30 @@ def modify_indicator(
                 detail="Threat indicator not found.",
             )
 
-        return indicator
+        response = ThreatIndicatorResponse.model_validate(
+            indicator
+        )
+
+        changed_fields = update.model_dump(
+            exclude_unset=True
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="threat_indicator_updated",
+            resource_type="threat_indicator",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Updated threat indicator "
+                f"'{response.indicator_value}'. "
+                f"Changes: {changed_fields}"
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()

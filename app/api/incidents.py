@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.core.database import SessionLocal
 from app.core.rbac import require_roles
@@ -17,6 +17,8 @@ from app.models.incident import (
     IncidentUpdate,
 )
 
+from app.services.audit_service import log_user_action
+
 
 router = APIRouter(
     prefix="/api/incidents",
@@ -30,6 +32,7 @@ router = APIRouter(
 )
 def create_new_incident(
     incident: IncidentCreate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -41,11 +44,32 @@ def create_new_incident(
     db = SessionLocal()
 
     try:
-        return create_incident(
+        db_incident = create_incident(
             db=db,
             incident=incident,
             created_by_user_id=current_user.id,
         )
+
+        response = IncidentResponse.model_validate(
+            db_incident
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="incident_created",
+            resource_type="incident",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Created incident '{response.title}' "
+                f"with severity '{response.severity}' "
+                f"and status '{response.status}'."
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()
@@ -116,6 +140,7 @@ def get_incident(
 def modify_incident(
     incident_id: int,
     update: IncidentUpdate,
+    request: Request,
     current_user: UserDB = Depends(
         require_roles(
             "admin",
@@ -139,7 +164,29 @@ def modify_incident(
                 detail="Incident not found.",
             )
 
-        return incident
+        response = IncidentResponse.model_validate(
+            incident
+        )
+
+        changed_fields = update.model_dump(
+            exclude_unset=True
+        )
+
+        log_user_action(
+            db=db,
+            user=current_user,
+            action="incident_updated",
+            resource_type="incident",
+            resource_id=str(response.id),
+            status="success",
+            details=(
+                f"Updated incident '{response.title}'. "
+                f"Changes: {changed_fields}"
+            ),
+            request=request,
+        )
+
+        return response
 
     finally:
         db.close()
