@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.exc import IntegrityError
 
 from app.core.auth_dependencies import get_current_user
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.core.login_rate_limiter import login_rate_limiter
 from app.core.rbac import require_roles
 from app.core.security import create_access_token
 
@@ -13,7 +14,7 @@ from app.db.user_repository import create_user
 from app.models.auth import LoginRequest, TokenResponse
 from app.models.user import UserCreate, UserResponse
 
-from app.services.audit_service import log_user_action
+from app.services.audit_service import get_client_ip, log_user_action
 from app.services.auth_service import authenticate_user
 
 
@@ -71,8 +72,6 @@ def register_user(
             user=user,
         )
 
-        # Materialize the response before the audit-log
-        # commit can expire the ORM instance.
         response = UserResponse.model_validate(
             created_user
         )
@@ -126,11 +125,52 @@ def register_user(
 @router.post(
     "/login",
     response_model=TokenResponse,
+    responses={
+        429: {
+            "description": "Too many login attempts",
+        }
+    },
 )
 def login(
     login_data: LoginRequest,
     request: Request,
+    response: Response,
 ):
+
+    client_ip = get_client_ip(request) or "unknown"
+
+    client_key = (
+        f"{client_ip}:"
+        f"{login_data.identifier.strip().lower()}"
+    )
+
+    if not login_rate_limiter.is_allowed(
+        client_key
+    ):
+        retry_after = (
+            login_rate_limiter.retry_after_seconds(
+                client_key
+            )
+        )
+
+        response.headers["Retry-After"] = str(
+            retry_after
+        )
+
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Too many login attempts. "
+                "Please try again later."
+            ),
+            headers={
+                "Retry-After": str(retry_after),
+            },
+        )
+
+    login_rate_limiter.record_attempt(
+        client_key
+    )
 
     db = SessionLocal()
 
@@ -161,13 +201,16 @@ def login(
                 detail="Invalid username/email or password.",
             )
 
-        # Capture primitive values before the audit commit.
         user_id = user.id
         user_role = user.role
 
         access_token = create_access_token(
             subject=str(user_id),
             role=user_role,
+        )
+
+        login_rate_limiter.reset(
+            client_key
         )
 
         log_user_action(

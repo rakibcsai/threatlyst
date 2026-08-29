@@ -13,6 +13,15 @@ from app.api.notifications import router as notifications_router
 from app.api.reports import router as reports_router
 from app.api.threat_intelligence import router as threat_intelligence_router
 
+from app.core.cors import configure_cors
+from app.core.request_size_limit import RequestSizeLimitMiddleware
+from app.core.security_config import validate_security_configuration
+from app.core.security_headers import SecurityHeadersMiddleware
+from app.core.trusted_hosts import configure_trusted_hosts
+
+
+validate_security_configuration()
+
 
 app = FastAPI(
     title="ThreatLyst",
@@ -21,6 +30,20 @@ app = FastAPI(
         "Threat Investigation Platform"
     ),
     version="0.1.0",
+)
+
+
+configure_trusted_hosts(app)
+configure_cors(app)
+
+
+app.add_middleware(
+    RequestSizeLimitMiddleware
+)
+
+
+app.add_middleware(
+    SecurityHeadersMiddleware
 )
 
 
