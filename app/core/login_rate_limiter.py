@@ -133,7 +133,10 @@ class LoginRateLimiter:
 
             return max(
                 1,
-                int(remaining) + 1,
+                min(
+                    self.window_seconds,
+                    int(remaining) + 1,
+                ),
             )
 
 

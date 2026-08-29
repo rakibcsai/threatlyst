@@ -41,6 +41,11 @@ class ThreatDetectionModel:
         operational security-event feature vectors.
         """
 
+        if len(training_data) == 0:
+            raise ValueError(
+                "Training data cannot be empty."
+            )
+
         data = np.array(
             training_data,
             dtype=float,
@@ -49,11 +54,6 @@ class ThreatDetectionModel:
         if data.ndim != 2:
             raise ValueError(
                 "Training data must be a 2-dimensional array."
-            )
-
-        if len(data) == 0:
-            raise ValueError(
-                "Training data cannot be empty."
             )
 
         self.model.fit(data)
@@ -166,8 +166,6 @@ class ThreatDetectionModel:
             )
 
         else:
-            # Backward compatibility with older ThreatLyst
-            # artifacts that stored only the estimator.
             self.model = artifact
             self.metadata = {}
 
@@ -195,12 +193,6 @@ def anomaly_score_to_confidence(
     """
     Convert the Isolation Forest anomaly score into
     a normalized confidence value between 0.0 and 1.0.
-
-    More negative anomaly scores indicate stronger
-    evidence of anomalous behaviour.
-
-    More positive scores indicate stronger evidence
-    of normal behaviour.
     """
 
     confidence = 0.5 - anomaly_score
