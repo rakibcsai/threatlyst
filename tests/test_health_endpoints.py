@@ -12,6 +12,24 @@ def create_test_app() -> FastAPI:
     return app
 
 
+class HealthyDatabaseSession:
+    def execute(self, statement):
+        return None
+
+    def close(self):
+        pass
+
+
+class UnhealthyDatabaseSession:
+    def execute(self, statement):
+        raise RuntimeError(
+            "Database unavailable"
+        )
+
+    def close(self):
+        pass
+
+
 def test_liveness_endpoint_returns_alive():
     app = create_test_app()
     client = TestClient(app)
@@ -26,7 +44,14 @@ def test_liveness_endpoint_returns_alive():
     }
 
 
-def test_health_endpoint_returns_healthy():
+def test_health_endpoint_returns_healthy(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "app.api.health.SessionLocal",
+        lambda: HealthyDatabaseSession(),
+    )
+
     app = create_test_app()
     client = TestClient(app)
 
@@ -34,8 +59,30 @@ def test_health_endpoint_returns_healthy():
 
     assert response.status_code == 200
 
-    body = response.json()
+    assert response.json() == {
+        "status": "healthy",
+        "service": "ThreatLyst API",
+        "database": "healthy",
+    }
 
-    assert body["status"] == "healthy"
-    assert body["service"] == "ThreatLyst API"
-    assert body["database"] == "healthy"
+
+def test_health_endpoint_returns_503_when_database_fails(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "app.api.health.SessionLocal",
+        lambda: UnhealthyDatabaseSession(),
+    )
+
+    app = create_test_app()
+    client = TestClient(app)
+
+    response = client.get("/health")
+
+    assert response.status_code == 503
+
+    assert response.json() == {
+        "status": "unhealthy",
+        "service": "ThreatLyst API",
+        "database": "unhealthy",
+    }
