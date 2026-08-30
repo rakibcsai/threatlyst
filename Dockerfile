@@ -16,7 +16,17 @@ COPY requirements.txt .
 RUN python -m pip install --upgrade pip \
     && python -m pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN groupadd --system threatlyst \
+    && useradd \
+        --system \
+        --gid threatlyst \
+        --home-dir /app \
+        --shell /usr/sbin/nologin \
+        threatlyst
+
+COPY --chown=threatlyst:threatlyst . .
+
+USER threatlyst
 
 EXPOSE 8000
 

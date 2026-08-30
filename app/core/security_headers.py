@@ -9,7 +9,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     responses.
 
     These headers reduce exposure to common browser-based
-    attacks and information leakage.
+    attacks, information leakage, framing attacks, and
+    insecure transport downgrade behavior.
     """
 
     async def dispatch(
@@ -43,8 +44,22 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "same-origin"
         )
 
+        response.headers[
+            "X-Permitted-Cross-Domain-Policies"
+        ] = "none"
+
         response.headers["Cache-Control"] = (
             "no-store"
         )
+
+        # HSTS must only be sent when the request is
+        # actually being served over HTTPS.
+        if request.url.scheme == "https":
+            response.headers[
+                "Strict-Transport-Security"
+            ] = (
+                "max-age=31536000; "
+                "includeSubDomains"
+            )
 
         return response

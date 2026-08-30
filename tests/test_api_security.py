@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 
 from app.core.cors import configure_cors
@@ -20,8 +20,13 @@ def create_test_app() -> FastAPI:
         return {"status": "ok"}
 
     @app.post("/echo")
-    async def echo():
-        return {"status": "accepted"}
+    async def echo(request: Request):
+        body = await request.body()
+
+        return {
+            "status": "accepted",
+            "size": len(body),
+        }
 
     return app
 
@@ -36,12 +41,52 @@ def test_security_headers_are_present():
     )
 
     assert response.status_code == 200
-    assert response.headers["x-content-type-options"] == "nosniff"
-    assert response.headers["x-frame-options"] == "DENY"
-    assert response.headers["referrer-policy"] == "no-referrer"
-    assert response.headers["cross-origin-opener-policy"] == "same-origin"
-    assert response.headers["cross-origin-resource-policy"] == "same-origin"
-    assert response.headers["cache-control"] == "no-store"
+
+    assert (
+        response.headers["x-content-type-options"]
+        == "nosniff"
+    )
+
+    assert (
+        response.headers["x-frame-options"]
+        == "DENY"
+    )
+
+    assert (
+        response.headers["referrer-policy"]
+        == "no-referrer"
+    )
+
+    assert (
+        response.headers[
+            "cross-origin-opener-policy"
+        ]
+        == "same-origin"
+    )
+
+    assert (
+        response.headers[
+            "cross-origin-resource-policy"
+        ]
+        == "same-origin"
+    )
+
+    assert (
+        response.headers[
+            "x-permitted-cross-domain-policies"
+        ]
+        == "none"
+    )
+
+    assert (
+        response.headers["cache-control"]
+        == "no-store"
+    )
+
+    assert (
+        "strict-transport-security"
+        not in response.headers
+    )
 
 
 def test_trusted_host_accepts_localhost():
@@ -81,8 +126,11 @@ def test_cors_allows_local_frontend():
     )
 
     assert response.status_code == 200
+
     assert (
-        response.headers["access-control-allow-origin"]
+        response.headers[
+            "access-control-allow-origin"
+        ]
         == "http://localhost:3000"
     )
 
@@ -91,13 +139,17 @@ def test_request_size_limit_rejects_large_request():
     app = create_test_app()
     client = TestClient(app)
 
-    oversized_length = (2 * 1024 * 1024) + 1
+    oversized_length = (
+        2 * 1024 * 1024
+    ) + 1
 
     response = client.post(
         "/echo",
         headers={
             "host": "localhost",
-            "content-length": str(oversized_length),
+            "content-length": str(
+                oversized_length
+            ),
         },
     )
 
@@ -117,3 +169,22 @@ def test_request_size_limit_rejects_invalid_content_length():
     )
 
     assert response.status_code == 400
+
+
+def test_request_size_limit_checks_actual_body_size():
+    app = create_test_app()
+    client = TestClient(app)
+
+    oversized_body = b"A" * (
+        (2 * 1024 * 1024) + 1
+    )
+
+    response = client.post(
+        "/echo",
+        headers={
+            "host": "localhost",
+        },
+        content=oversized_body,
+    )
+
+    assert response.status_code == 413

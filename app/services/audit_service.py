@@ -10,22 +10,18 @@ def get_client_ip(
     request: Request | None,
 ) -> str | None:
     """
-    Extract the client IP address from the request.
+    Return the direct network peer IP address.
 
-    X-Forwarded-For is checked first for reverse-proxy
-    deployments. The direct client address is used as
-    a fallback.
+    Untrusted proxy headers such as X-Forwarded-For are
+    intentionally ignored because clients can spoof them.
+
+    Trusted reverse-proxy support can be enabled later at
+    the infrastructure layer when an approved proxy is
+    configured.
     """
 
     if request is None:
         return None
-
-    forwarded_for = request.headers.get(
-        "x-forwarded-for"
-    )
-
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
 
     if request.client:
         return request.client.host

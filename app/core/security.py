@@ -65,12 +65,23 @@ def create_access_token(
 def decode_access_token(token: str) -> dict:
     """
     Decode and validate a JWT access token.
+
+    Required claims ensure malformed or incomplete tokens
+    cannot be accepted by ThreatLyst.
     """
 
     return jwt.decode(
         token,
         settings.jwt_secret_key,
         algorithms=[settings.jwt_algorithm],
+        options={
+            "require": [
+                "sub",
+                "role",
+                "iat",
+                "exp",
+            ],
+        },
     )
 
 

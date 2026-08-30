@@ -6,18 +6,25 @@ from time import monotonic
 MAX_LOGIN_ATTEMPTS = 5
 LOGIN_WINDOW_SECONDS = 60
 
+MAX_IP_LOGIN_ATTEMPTS = 20
+IP_LOGIN_WINDOW_SECONDS = 60
+
 
 class LoginRateLimiter:
     """
-    Simple in-memory rate limiter for authentication attempts.
+    In-memory rate limiter for authentication attempts.
 
-    Each client key may make a limited number of login
-    attempts within the configured time window.
+    ThreatLyst uses separate limiter instances for:
+    - account-oriented protection
+    - source-IP-oriented protection
 
-    This implementation is suitable for the current
-    single-instance ThreatLyst deployment. A distributed
-    store such as Redis can replace it later when ThreatLyst
-    runs across multiple application instances.
+    This reduces both brute-force attacks against a
+    specific account and username-rotation attacks from
+    a single source IP.
+
+    A distributed store such as Redis should replace this
+    implementation when ThreatLyst runs across multiple
+    application instances.
     """
 
     def __init__(
@@ -69,7 +76,7 @@ class LoginRateLimiter:
         client_key: str,
     ) -> None:
         """
-        Record a login attempt for the supplied client key.
+        Record a login attempt for the supplied key.
         """
 
         now = monotonic()
@@ -89,7 +96,7 @@ class LoginRateLimiter:
         client_key: str,
     ) -> None:
         """
-        Clear recorded attempts after successful login.
+        Clear recorded attempts for the supplied key.
         """
 
         with self._lock:
@@ -104,7 +111,7 @@ class LoginRateLimiter:
     ) -> int:
         """
         Return an approximate number of seconds until the
-        client may attempt authentication again.
+        key may attempt authentication again.
         """
 
         now = monotonic()
@@ -141,3 +148,8 @@ class LoginRateLimiter:
 
 
 login_rate_limiter = LoginRateLimiter()
+
+ip_login_rate_limiter = LoginRateLimiter(
+    max_attempts=MAX_IP_LOGIN_ATTEMPTS,
+    window_seconds=IP_LOGIN_WINDOW_SECONDS,
+)
