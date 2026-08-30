@@ -8,12 +8,18 @@ from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.incidents import router as incidents_router
 from app.api.ingest import router as ingest_router
+from app.api.liveness import router as liveness_router
+from app.api.metrics import router as metrics_router
 from app.api.mitre_intelligence import router as mitre_intelligence_router
 from app.api.notifications import router as notifications_router
 from app.api.reports import router as reports_router
-from app.api.threat_intelligence import router as threat_intelligence_router
+from app.api.threat_intelligence import (
+    router as threat_intelligence_router,
+)
 
 from app.core.cors import configure_cors
+from app.core.logging_config import configure_logging
+from app.core.request_logging import RequestLoggingMiddleware
 from app.core.request_size_limit import RequestSizeLimitMiddleware
 from app.core.security_config import validate_security_configuration
 from app.core.security_headers import SecurityHeadersMiddleware
@@ -21,6 +27,7 @@ from app.core.trusted_hosts import configure_trusted_hosts
 
 
 validate_security_configuration()
+configure_logging()
 
 
 app = FastAPI(
@@ -36,15 +43,9 @@ app = FastAPI(
 configure_trusted_hosts(app)
 configure_cors(app)
 
-
-app.add_middleware(
-    RequestSizeLimitMiddleware
-)
-
-
-app.add_middleware(
-    SecurityHeadersMiddleware
-)
+app.add_middleware(RequestSizeLimitMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 
 app.include_router(auth_router)
@@ -58,6 +59,8 @@ app.include_router(mitre_intelligence_router)
 app.include_router(audit_logs_router)
 app.include_router(notifications_router)
 app.include_router(reports_router)
+app.include_router(metrics_router)
+app.include_router(liveness_router)
 app.include_router(health_router)
 
 
