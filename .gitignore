@@ -156,6 +156,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.docker
 
 # Spyder project settings
 .spyderproject
@@ -222,3 +223,4 @@ __marimo__/
 
 # ML model artifacts
 app/ai/*.joblib
+
