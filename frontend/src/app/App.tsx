@@ -6,7 +6,9 @@ import { router } from './router'
 export function App() {
   return (
     <ErrorBoundary>
-      <AppProviders><RouterProvider router={router} /></AppProviders>
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>
     </ErrorBoundary>
   )
 }

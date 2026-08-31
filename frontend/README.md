@@ -23,3 +23,4 @@ The frontend expects the ThreatLyst FastAPI backend to be available at:
 
 ```text
 http://127.0.0.1:8000
+```

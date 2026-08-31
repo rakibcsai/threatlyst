@@ -6,7 +6,13 @@ export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
-  if (isLoading) return <main className="grid min-h-screen place-items-center bg-slate-950"><Spinner label="Validating session" /></main>
-  if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location }} />
+  if (isLoading)
+    return (
+      <main className="grid min-h-screen place-items-center bg-slate-950">
+        <Spinner label="Validating session" />
+      </main>
+    )
+  if (!isAuthenticated)
+    return <Navigate to="/login" replace state={{ from: location }} />
   return <Outlet />
 }
