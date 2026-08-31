@@ -31,12 +31,116 @@ configure_logging()
 
 
 app = FastAPI(
-    title="ThreatLyst",
+    title="ThreatLyst API",
     description=(
-        "AI-Powered Security Operations and "
-        "Threat Investigation Platform"
+        "ThreatLyst is an AI-powered Security Operations "
+        "and Threat Investigation Platform.\n\n"
+        "The API provides capabilities for security-event "
+        "ingestion, automated analysis, alert management, "
+        "incident management, threat intelligence, MITRE "
+        "ATT&CK intelligence, notifications, reporting, "
+        "audit logging, and operational monitoring.\n\n"
+        "Authentication methods:\n"
+        "- Bearer JWT for authenticated ThreatLyst users.\n"
+        "- X-API-Key for external security-event ingestion.\n\n"
+        "Role-based access control is enforced for protected "
+        "operations."
     ),
     version="0.1.0",
+    contact={
+        "name": "ThreatLyst",
+    },
+    license_info={
+        "name": "Proprietary",
+    },
+    openapi_tags=[
+        {
+            "name": "Authentication",
+            "description": (
+                "User authentication, account creation, "
+                "and current-user profile operations."
+            ),
+        },
+        {
+            "name": "API Keys",
+            "description": (
+                "Administrative management of integration "
+                "API keys."
+            ),
+        },
+        {
+            "name": "Events",
+            "description": (
+                "Security-event submission, analysis, "
+                "and retrieval."
+            ),
+        },
+        {
+            "name": "Ingestion",
+            "description": (
+                "External security-event ingestion using "
+                "X-API-Key authentication."
+            ),
+        },
+        {
+            "name": "Alerts",
+            "description": (
+                "SOC alert creation, assignment, "
+                "status management, and investigation."
+            ),
+        },
+        {
+            "name": "Incidents",
+            "description": (
+                "Security incident management and tracking."
+            ),
+        },
+        {
+            "name": "Threat Intelligence",
+            "description": (
+                "Threat-indicator storage and intelligence "
+                "management."
+            ),
+        },
+        {
+            "name": "MITRE Intelligence",
+            "description": (
+                "MITRE ATT&CK technique intelligence."
+            ),
+        },
+        {
+            "name": "Audit Logs",
+            "description": (
+                "Administrative security audit-log access."
+            ),
+        },
+        {
+            "name": "Notifications",
+            "description": (
+                "User and global security notifications."
+            ),
+        },
+        {
+            "name": "Reports",
+            "description": (
+                "Security reporting and SOC summary data."
+            ),
+        },
+        {
+            "name": "Metrics",
+            "description": (
+                "Authenticated operational application "
+                "metrics."
+            ),
+        },
+        {
+            "name": "Health",
+            "description": (
+                "Application liveness and database "
+                "readiness monitoring."
+            ),
+        },
+    ],
 )
 
 
@@ -64,7 +168,15 @@ app.include_router(liveness_router)
 app.include_router(health_router)
 
 
-@app.get("/")
+@app.get(
+    "/",
+    tags=["Health"],
+    summary="ThreatLyst API root",
+    description=(
+        "Return basic ThreatLyst API identification "
+        "and availability information."
+    ),
+)
 def root():
     return {
         "name": "ThreatLyst",
