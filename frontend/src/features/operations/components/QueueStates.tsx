@@ -36,7 +36,10 @@ export function QueueError({
   isRetrying: boolean
 }) {
   return (
-    <section className="surface-card mt-5 grid min-h-80 place-items-center p-8 text-center">
+    <section
+      className="surface-card mt-5 grid min-h-80 place-items-center p-8 text-center"
+      aria-live="assertive"
+    >
       <div className="max-w-md">
         <AlertTriangle className="mx-auto size-9 text-rose-400" />
         <h2 className="mt-4 text-xl font-semibold text-white">{title}</h2>
@@ -45,7 +48,7 @@ export function QueueError({
         </p>
         <Button className="mt-5" onClick={onRetry} disabled={isRetrying}>
           <RefreshCw className={`size-4 ${isRetrying ? 'animate-spin' : ''}`} />
-          Try again
+          {isRetrying ? 'Retrying' : 'Try again'}
         </Button>
       </div>
     </section>

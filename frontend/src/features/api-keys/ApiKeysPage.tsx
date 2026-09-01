@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { KeyRound, Plus, RefreshCw, Search, ShieldCheck } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
+import { FeedbackMessage } from '../../components/ui/FeedbackMessage'
 import {
   QueueEmpty,
   QueueError,
@@ -100,12 +101,9 @@ export function ApiKeysPage() {
           </section>
         )}
         {revokedName && (
-          <div
-            role="status"
-            className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/[0.07] px-4 py-3 text-sm text-emerald-300"
-          >
+          <FeedbackMessage tone="success" className="mt-4">
             API key “{revokedName}” was revoked successfully.
-          </div>
+          </FeedbackMessage>
         )}
         {query.isLoading ? (
           <QueueSkeleton label="API keys" />

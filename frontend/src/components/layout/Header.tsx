@@ -1,17 +1,29 @@
 import { LogOut, Menu, Shield } from 'lucide-react'
+import type { RefObject } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../ui/Button'
 import { Brand } from './Brand'
 
-export function Header({ onMenuClick }: { onMenuClick: () => void }) {
+export function Header({
+  onMenuClick,
+  mobileOpen,
+  menuButtonRef,
+}: {
+  onMenuClick: () => void
+  mobileOpen: boolean
+  menuButtonRef: RefObject<HTMLButtonElement | null>
+}) {
   const { user, logout } = useAuth()
   return (
     <header className="flex h-16 items-center justify-between border-b border-slate-800/80 bg-[#08111a]/90 px-4 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
         <button
+          ref={menuButtonRef}
           onClick={onMenuClick}
-          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 lg:hidden"
+          className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 lg:hidden"
           aria-label="Open navigation"
+          aria-expanded={mobileOpen}
+          aria-controls="primary-sidebar"
         >
           <Menu className="size-5" />
         </button>
@@ -22,7 +34,9 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <p className="text-sm font-semibold text-slate-200">
             Security Operations Center
           </p>
-          <p className="text-xs text-slate-600">Threat intelligence overview</p>
+          <p className="text-xs text-slate-600">
+            Protected operations workspace
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">

@@ -13,11 +13,12 @@ export function VerdictDonutChart({ verdicts }: { verdicts: VerdictStats }) {
 
   return (
     <div
-      className="grid min-h-64 grid-cols-[minmax(0,1fr)_8rem] items-center gap-4"
+      className="grid min-h-64 min-w-0 grid-cols-1 items-center gap-2 overflow-hidden sm:grid-cols-[minmax(0,1fr)_8rem] sm:gap-4"
       role="img"
       aria-label={`AI verdicts: ${verdicts.suspicious} suspicious and ${verdicts.benign} benign`}
+      data-testid="verdict-chart-layout"
     >
-      <div className="relative h-52 min-w-0">
+      <div className="relative h-52 min-w-0 overflow-hidden">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -45,17 +46,23 @@ export function VerdictDonutChart({ verdicts }: { verdicts: VerdictStats }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
-          <span className="text-2xl font-semibold text-white">
+          <span
+            className="text-2xl font-semibold leading-none text-white"
+            data-testid="verdict-rate"
+          >
             {suspiciousRate}%
           </span>
-          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+          <span className="mt-1 text-[10px] uppercase tracking-wider text-slate-500">
             Suspicious
           </span>
         </div>
       </div>
-      <ul className="space-y-4">
+      <ul
+        className="grid min-w-0 grid-cols-2 gap-2 border-t border-slate-800/70 pt-3 sm:block sm:space-y-4 sm:border-0 sm:pt-0"
+        data-testid="verdict-legend"
+      >
         {data.map((item) => (
-          <li key={item.name}>
+          <li key={item.name} className="min-w-0 px-1 sm:px-0">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span
                 className="size-2 rounded-full"
@@ -63,7 +70,7 @@ export function VerdictDonutChart({ verdicts }: { verdicts: VerdictStats }) {
               />
               {item.name}
             </div>
-            <p className="mt-1 pl-4 text-lg font-semibold text-slate-100">
+            <p className="mt-1 truncate pl-4 text-base font-semibold text-slate-100 sm:text-lg">
               {formatCount(item.value)}
             </p>
           </li>

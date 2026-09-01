@@ -1,9 +1,15 @@
 import { SearchX } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-export function NotFoundPage() {
+export function NotFoundPage({
+  authenticated = false,
+}: {
+  authenticated?: boolean
+}) {
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-950 p-6 text-center text-slate-100">
+    <main
+      className={`grid place-items-center p-6 text-center text-slate-100 ${authenticated ? 'min-h-[calc(100vh-4rem)]' : 'min-h-screen bg-slate-950'}`}
+    >
       <div>
         <SearchX className="mx-auto size-10 text-slate-600" />
         <p className="mt-5 text-xs font-bold uppercase tracking-[0.2em] text-cyan-400">
@@ -16,10 +22,10 @@ export function NotFoundPage() {
           The requested ThreatLyst surface could not be located.
         </p>
         <Link
-          to="/"
-          className="mt-6 inline-flex text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+          to={authenticated ? '/dashboard' : '/'}
+          className="mt-6 inline-flex rounded-md text-sm font-semibold text-cyan-400 hover:text-cyan-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-400"
         >
-          Return to ThreatLyst
+          {authenticated ? 'Return to dashboard' : 'Return to ThreatLyst'}
         </Link>
       </div>
     </main>

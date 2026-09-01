@@ -1,22 +1,32 @@
-import { ChevronLeft, LockKeyhole } from 'lucide-react'
+import { ChevronLeft, LockKeyhole, X } from 'lucide-react'
+import type { RefObject } from 'react'
 import { NavLink } from 'react-router-dom'
-import { navigation, plannedNavigation } from '../../config/navigation'
+import { navigation } from '../../config/navigation'
 import { useAuth } from '../../hooks/useAuth'
 import { cn } from '../../lib/cn'
 import { Brand } from './Brand'
 
 export function Sidebar({
+  panelRef,
   collapsed,
   mobileOpen,
   onToggle,
+  onMobileClose,
+  onNavigate,
 }: {
+  panelRef: RefObject<HTMLElement | null>
   collapsed: boolean
   mobileOpen: boolean
   onToggle: () => void
+  onMobileClose: () => void
+  onNavigate: () => void
 }) {
   const { user } = useAuth()
   return (
     <aside
+      id="primary-sidebar"
+      ref={panelRef}
+      aria-label="ThreatLyst navigation panel"
       className={cn(
         'fixed inset-y-0 left-0 z-40 flex h-screen w-64 shrink-0 -translate-x-full flex-col border-r border-slate-800/80 bg-[#09131d] transition-[transform,width] duration-200 lg:static lg:translate-x-0',
         mobileOpen && 'translate-x-0',
@@ -24,10 +34,19 @@ export function Sidebar({
       )}
     >
       <div className="flex h-16 items-center justify-between border-b border-slate-800/80 px-5">
-        <Brand compact={collapsed} />
-        {!collapsed && (
+        <Brand compact={collapsed && !mobileOpen} />
+        <button
+          data-mobile-close
+          className="rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 lg:hidden"
+          onClick={onMobileClose}
+          aria-label="Close navigation"
+        >
+          <X className="size-5" />
+        </button>
+        {(!collapsed || mobileOpen) && (
           <button
-            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-200"
+            data-desktop-only
+            className="hidden rounded-md p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 lg:block"
             onClick={onToggle}
             aria-label="Collapse sidebar"
           >
@@ -35,8 +54,11 @@ export function Sidebar({
           </button>
         )}
       </div>
-      <nav className="flex-1 p-3" aria-label="Primary navigation">
-        {!collapsed && (
+      <nav
+        className="flex-1 overflow-y-auto overscroll-contain p-3"
+        aria-label="ThreatLyst primary navigation"
+      >
+        {(!collapsed || mobileOpen) && (
           <p className="px-3 pb-2 pt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">
             Command
           </p>
@@ -47,42 +69,33 @@ export function Sidebar({
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium',
+                  'flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400',
                   isActive
                     ? 'bg-cyan-400/10 text-cyan-300 ring-1 ring-inset ring-cyan-400/15'
                     : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100',
                 )
               }
-              title={collapsed ? item.label : undefined}
+              title={collapsed && !mobileOpen ? item.label : undefined}
             >
               <item.icon className="size-[18px] shrink-0" />
-              {!collapsed && item.label}
+              {(!collapsed || mobileOpen) && item.label}
             </NavLink>
           ))}
-        {!collapsed && (
-          <div className="mt-6 rounded-lg border border-dashed border-slate-800 p-3 text-xs text-slate-600">
-            <plannedNavigation.icon className="mb-2 size-4" />
-            <span className="font-medium text-slate-500">
-              {plannedNavigation.label}
-            </span>
-            <p className="mt-1 leading-5">
-              Available in later approved phases.
-            </p>
-          </div>
-        )}
       </nav>
       {collapsed && (
         <button
+          data-desktop-only
           onClick={onToggle}
-          className="m-4 grid size-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-800"
+          className="m-4 hidden size-10 place-items-center rounded-lg text-slate-500 hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 lg:grid"
           aria-label="Expand sidebar"
         >
           <ChevronLeft className="size-4 rotate-180" />
         </button>
       )}
-      {!collapsed && (
+      {(!collapsed || mobileOpen) && (
         <div className="m-3 flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
           <LockKeyhole className="size-4 text-emerald-400" />
           <div className="min-w-0">

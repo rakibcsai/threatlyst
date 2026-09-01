@@ -1,6 +1,5 @@
 import {
   BellRing,
-  Blocks,
   ClipboardList,
   FileChartColumn,
   Gauge,
@@ -90,5 +89,3 @@ export const navigation: NavigationItem[] = [
     roles: ['admin'],
   },
 ]
-
-export const plannedNavigation = { label: 'Operations modules', icon: Blocks }

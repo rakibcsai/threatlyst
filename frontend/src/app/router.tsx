@@ -2,7 +2,6 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
 import { LoginPage } from '../features/auth/LoginPage'
 import { ForbiddenPage } from '../pages/errors/ForbiddenPage'
-import { NotFoundPage } from '../pages/errors/NotFoundPage'
 import { LazyDashboardRoute } from './LazyDashboardRoute'
 import { LazyEventsRoute } from './LazyEventsRoute'
 import { LazyAlertsRoute } from './LazyAlertsRoute'
@@ -16,6 +15,7 @@ import { LazyApiKeysRoute } from './LazyApiKeysRoute'
 import { LazySystemHealthRoute } from './LazySystemHealthRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleRoute } from './RoleRoute'
+import { NotFoundRoute } from './NotFoundRoute'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -70,5 +70,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
-  { path: '*', element: <NotFoundPage /> },
+  { path: '*', element: <NotFoundRoute /> },
 ])

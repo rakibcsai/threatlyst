@@ -2,11 +2,16 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 
+interface Props {
+  children: ReactNode
+  onReload?: () => void
+}
+
 interface State {
   hasError: boolean
 }
 
-export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
+export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false }
 
   static getDerivedStateFromError(): State {
@@ -21,19 +26,26 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
     if (!this.state.hasError) return this.props.children
     return (
       <main className="grid min-h-screen place-items-center bg-slate-950 p-6 text-slate-100">
-        <div className="max-w-md text-center">
+        <div
+          className="max-w-md text-center"
+          role="alert"
+          aria-labelledby="application-error-title"
+        >
           <AlertTriangle
             className="mx-auto mb-5 size-10 text-amber-400"
             aria-hidden="true"
           />
-          <h1 className="text-2xl font-semibold">
+          <h1 id="application-error-title" className="text-2xl font-semibold">
             ThreatLyst encountered an error
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-400">
             The interface could not continue safely. Reload to start a clean
             session.
           </p>
-          <Button className="mt-6" onClick={() => window.location.reload()}>
+          <Button
+            className="mt-6"
+            onClick={this.props.onReload ?? (() => window.location.reload())}
+          >
             Reload application
           </Button>
         </div>
