@@ -10,6 +10,7 @@ import {
   Shield,
   MailWarning,
   KeyRound,
+  HeartPulse,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '../types/auth'
@@ -69,6 +70,12 @@ export const navigation: NavigationItem[] = [
     to: '/reports',
     icon: FileChartColumn,
     roles: ['admin', 'analyst'],
+  },
+  {
+    label: 'System Health',
+    to: '/system-health',
+    icon: HeartPulse,
+    roles: ['admin', 'analyst', 'viewer'],
   },
   {
     label: 'Audit Logs',

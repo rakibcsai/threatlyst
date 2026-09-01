@@ -28,6 +28,7 @@ describe('RBAC helpers', () => {
     '/threat-intelligence',
     '/mitre',
     '/notifications',
+    '/system-health',
   ])('makes %s available to every backend-supported role', (path) => {
     const item = navigation.find((entry) => entry.to === path)
     expect(item?.roles).toEqual(['admin', 'analyst', 'viewer'])

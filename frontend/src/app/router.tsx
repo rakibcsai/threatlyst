@@ -13,6 +13,7 @@ import { LazyNotificationsRoute } from './LazyNotificationsRoute'
 import { LazyReportsRoute } from './LazyReportsRoute'
 import { LazyAuditRoute } from './LazyAuditRoute'
 import { LazyApiKeysRoute } from './LazyApiKeysRoute'
+import { LazySystemHealthRoute } from './LazySystemHealthRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleRoute } from './RoleRoute'
 
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
           },
           { path: '/mitre', element: <LazyMitreRoute /> },
           { path: '/notifications', element: <LazyNotificationsRoute /> },
+          { path: '/system-health', element: <LazySystemHealthRoute /> },
           {
             path: '/reports',
             element: (
