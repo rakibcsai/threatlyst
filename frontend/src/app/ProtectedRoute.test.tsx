@@ -53,7 +53,9 @@ function renderOperationsRoute(
     | '/threat-intelligence'
     | '/mitre'
     | '/notifications'
-    | '/reports',
+    | '/reports'
+    | '/audit'
+    | '/api-keys',
 ) {
   return render(
     <AuthContext.Provider value={baseAuth}>
@@ -105,6 +107,8 @@ describe('dashboard route access', () => {
     '/mitre',
     '/notifications',
     '/reports',
+    '/audit',
+    '/api-keys',
   ] as const)('protects the %s route from unauthenticated access', (path) => {
     renderOperationsRoute(path)
     expect(screen.getByText('Login route')).toBeInTheDocument()

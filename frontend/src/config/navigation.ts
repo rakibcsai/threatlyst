@@ -1,6 +1,7 @@
 import {
   BellRing,
   Blocks,
+  ClipboardList,
   FileChartColumn,
   Gauge,
   Radar,
@@ -8,6 +9,7 @@ import {
   Siren,
   Shield,
   MailWarning,
+  KeyRound,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '../types/auth'
@@ -67,6 +69,18 @@ export const navigation: NavigationItem[] = [
     to: '/reports',
     icon: FileChartColumn,
     roles: ['admin', 'analyst'],
+  },
+  {
+    label: 'Audit Logs',
+    to: '/audit',
+    icon: ClipboardList,
+    roles: ['admin'],
+  },
+  {
+    label: 'API Keys',
+    to: '/api-keys',
+    icon: KeyRound,
+    roles: ['admin'],
   },
 ]
 

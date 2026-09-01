@@ -11,6 +11,8 @@ import { LazyMitreRoute } from './LazyMitreRoute'
 import { LazyThreatIntelligenceRoute } from './LazyThreatIntelligenceRoute'
 import { LazyNotificationsRoute } from './LazyNotificationsRoute'
 import { LazyReportsRoute } from './LazyReportsRoute'
+import { LazyAuditRoute } from './LazyAuditRoute'
+import { LazyApiKeysRoute } from './LazyApiKeysRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleRoute } from './RoleRoute'
 
@@ -42,6 +44,22 @@ export const router = createBrowserRouter([
             element: (
               <RoleRoute allowedRoles={['admin', 'analyst']}>
                 <LazyReportsRoute />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: '/audit',
+            element: (
+              <RoleRoute allowedRoles={['admin']}>
+                <LazyAuditRoute />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: '/api-keys',
+            element: (
+              <RoleRoute allowedRoles={['admin']}>
+                <LazyApiKeysRoute />
               </RoleRoute>
             ),
           },
