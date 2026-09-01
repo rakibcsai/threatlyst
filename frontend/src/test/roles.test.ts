@@ -21,4 +21,12 @@ describe('RBAC helpers', () => {
     const events = navigation.find((item) => item.to === '/events')
     expect(events?.roles).toEqual(['admin', 'analyst', 'viewer'])
   })
+
+  it.each(['/alerts', '/incidents'])(
+    'makes %s available to every backend-supported role',
+    (path) => {
+      const item = navigation.find((entry) => entry.to === path)
+      expect(item?.roles).toEqual(['admin', 'analyst', 'viewer'])
+    },
+  )
 })

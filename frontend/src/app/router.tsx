@@ -5,6 +5,8 @@ import { ForbiddenPage } from '../pages/errors/ForbiddenPage'
 import { NotFoundPage } from '../pages/errors/NotFoundPage'
 import { LazyDashboardRoute } from './LazyDashboardRoute'
 import { LazyEventsRoute } from './LazyEventsRoute'
+import { LazyAlertsRoute } from './LazyAlertsRoute'
+import { LazyIncidentsRoute } from './LazyIncidentsRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -22,6 +24,8 @@ export const router = createBrowserRouter([
             element: <LazyDashboardRoute />,
           },
           { path: '/events', element: <LazyEventsRoute /> },
+          { path: '/alerts', element: <LazyAlertsRoute /> },
+          { path: '/incidents', element: <LazyIncidentsRoute /> },
           { path: '/forbidden', element: <ForbiddenPage /> },
         ],
       },

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -39,6 +40,9 @@ class IncidentResponse(BaseModel):
     status: IncidentStatus
     assigned_to_user_id: int | None
     created_by_user_id: int
+    created_at: datetime
+    updated_at: datetime
+    closed_at: datetime | None
 
     model_config = {
         "from_attributes": True,

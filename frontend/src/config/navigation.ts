@@ -1,4 +1,11 @@
-import { Blocks, Gauge, RadioTower, type LucideIcon } from 'lucide-react'
+import {
+  BellRing,
+  Blocks,
+  Gauge,
+  RadioTower,
+  Siren,
+  type LucideIcon,
+} from 'lucide-react'
 import type { UserRole } from '../types/auth'
 
 export interface NavigationItem {
@@ -19,6 +26,18 @@ export const navigation: NavigationItem[] = [
     label: 'Security Events',
     to: '/events',
     icon: RadioTower,
+    roles: ['admin', 'analyst', 'viewer'],
+  },
+  {
+    label: 'Alerts',
+    to: '/alerts',
+    icon: BellRing,
+    roles: ['admin', 'analyst', 'viewer'],
+  },
+  {
+    label: 'Incidents',
+    to: '/incidents',
+    icon: Siren,
     roles: ['admin', 'analyst', 'viewer'],
   },
 ]

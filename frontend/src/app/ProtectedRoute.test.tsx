@@ -46,6 +46,21 @@ function renderEventsRoute(auth: AuthContextValue) {
   )
 }
 
+function renderOperationsRoute(path: '/alerts' | '/incidents') {
+  return render(
+    <AuthContext.Provider value={baseAuth}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route element={<ProtectedRoute />}>
+            <Route path={path} element={<div>Operations route</div>} />
+          </Route>
+          <Route path="/login" element={<div>Login route</div>} />
+        </Routes>
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  )
+}
+
 describe('dashboard route access', () => {
   it('redirects unauthenticated users to login', () => {
     renderRoute(baseAuth)
@@ -74,4 +89,12 @@ describe('dashboard route access', () => {
     renderEventsRoute(baseAuth)
     expect(screen.getByText('Login route')).toBeInTheDocument()
   })
+
+  it.each(['/alerts', '/incidents'] as const)(
+    'protects the %s route from unauthenticated access',
+    (path) => {
+      renderOperationsRoute(path)
+      expect(screen.getByText('Login route')).toBeInTheDocument()
+    },
+  )
 })
