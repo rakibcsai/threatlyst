@@ -4,10 +4,11 @@ import { delay, http, HttpResponse } from 'msw'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { server } from '../../test/server'
+import { env } from '../../config/env'
 import type { DashboardStats } from './dashboard-types'
 import { DashboardPage } from './DashboardPage'
 
-const endpoint = 'http://127.0.0.1:8000/api/dashboard/stats'
+const endpoint = `${env.VITE_API_BASE_URL}/api/dashboard/stats`
 
 const stats: DashboardStats = {
   total_events: 1284,

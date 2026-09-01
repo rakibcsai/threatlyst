@@ -16,4 +16,9 @@ describe('RBAC helpers', () => {
     const dashboard = navigation.find((item) => item.to === '/dashboard')
     expect(dashboard?.roles).toEqual(['admin', 'analyst', 'viewer'])
   })
+
+  it('makes the security event list available to every backend-supported role', () => {
+    const events = navigation.find((item) => item.to === '/events')
+    expect(events?.roles).toEqual(['admin', 'analyst', 'viewer'])
+  })
 })
