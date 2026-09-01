@@ -7,6 +7,8 @@ import { LazyDashboardRoute } from './LazyDashboardRoute'
 import { LazyEventsRoute } from './LazyEventsRoute'
 import { LazyAlertsRoute } from './LazyAlertsRoute'
 import { LazyIncidentsRoute } from './LazyIncidentsRoute'
+import { LazyMitreRoute } from './LazyMitreRoute'
+import { LazyThreatIntelligenceRoute } from './LazyThreatIntelligenceRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export const router = createBrowserRouter([
@@ -26,6 +28,11 @@ export const router = createBrowserRouter([
           { path: '/events', element: <LazyEventsRoute /> },
           { path: '/alerts', element: <LazyAlertsRoute /> },
           { path: '/incidents', element: <LazyIncidentsRoute /> },
+          {
+            path: '/threat-intelligence',
+            element: <LazyThreatIntelligenceRoute />,
+          },
+          { path: '/mitre', element: <LazyMitreRoute /> },
           { path: '/forbidden', element: <ForbiddenPage /> },
         ],
       },

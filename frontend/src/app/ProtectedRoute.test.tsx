@@ -46,7 +46,9 @@ function renderEventsRoute(auth: AuthContextValue) {
   )
 }
 
-function renderOperationsRoute(path: '/alerts' | '/incidents') {
+function renderOperationsRoute(
+  path: '/alerts' | '/incidents' | '/threat-intelligence' | '/mitre',
+) {
   return render(
     <AuthContext.Provider value={baseAuth}>
       <MemoryRouter initialEntries={[path]}>
@@ -90,7 +92,7 @@ describe('dashboard route access', () => {
     expect(screen.getByText('Login route')).toBeInTheDocument()
   })
 
-  it.each(['/alerts', '/incidents'] as const)(
+  it.each(['/alerts', '/incidents', '/threat-intelligence', '/mitre'] as const)(
     'protects the %s route from unauthenticated access',
     (path) => {
       renderOperationsRoute(path)

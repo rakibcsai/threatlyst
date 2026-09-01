@@ -2,8 +2,10 @@ import {
   BellRing,
   Blocks,
   Gauge,
+  Radar,
   RadioTower,
   Siren,
+  Shield,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '../types/auth'
@@ -38,6 +40,18 @@ export const navigation: NavigationItem[] = [
     label: 'Incidents',
     to: '/incidents',
     icon: Siren,
+    roles: ['admin', 'analyst', 'viewer'],
+  },
+  {
+    label: 'Threat Intelligence',
+    to: '/threat-intelligence',
+    icon: Radar,
+    roles: ['admin', 'analyst', 'viewer'],
+  },
+  {
+    label: 'MITRE ATT&CK',
+    to: '/mitre',
+    icon: Shield,
     roles: ['admin', 'analyst', 'viewer'],
   },
 ]

@@ -57,7 +57,7 @@ export function QueueEmpty({
   noun,
 }: {
   filtered: boolean
-  noun: 'alerts' | 'incidents'
+  noun: string
 }) {
   const Icon = filtered ? SearchX : Inbox
   return (
