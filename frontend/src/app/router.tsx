@@ -9,7 +9,10 @@ import { LazyAlertsRoute } from './LazyAlertsRoute'
 import { LazyIncidentsRoute } from './LazyIncidentsRoute'
 import { LazyMitreRoute } from './LazyMitreRoute'
 import { LazyThreatIntelligenceRoute } from './LazyThreatIntelligenceRoute'
+import { LazyNotificationsRoute } from './LazyNotificationsRoute'
+import { LazyReportsRoute } from './LazyReportsRoute'
 import { ProtectedRoute } from './ProtectedRoute'
+import { RoleRoute } from './RoleRoute'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -33,6 +36,15 @@ export const router = createBrowserRouter([
             element: <LazyThreatIntelligenceRoute />,
           },
           { path: '/mitre', element: <LazyMitreRoute /> },
+          { path: '/notifications', element: <LazyNotificationsRoute /> },
+          {
+            path: '/reports',
+            element: (
+              <RoleRoute allowedRoles={['admin', 'analyst']}>
+                <LazyReportsRoute />
+              </RoleRoute>
+            ),
+          },
           { path: '/forbidden', element: <ForbiddenPage /> },
         ],
       },

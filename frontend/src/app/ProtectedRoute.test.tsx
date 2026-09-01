@@ -47,7 +47,13 @@ function renderEventsRoute(auth: AuthContextValue) {
 }
 
 function renderOperationsRoute(
-  path: '/alerts' | '/incidents' | '/threat-intelligence' | '/mitre',
+  path:
+    | '/alerts'
+    | '/incidents'
+    | '/threat-intelligence'
+    | '/mitre'
+    | '/notifications'
+    | '/reports',
 ) {
   return render(
     <AuthContext.Provider value={baseAuth}>
@@ -92,11 +98,15 @@ describe('dashboard route access', () => {
     expect(screen.getByText('Login route')).toBeInTheDocument()
   })
 
-  it.each(['/alerts', '/incidents', '/threat-intelligence', '/mitre'] as const)(
-    'protects the %s route from unauthenticated access',
-    (path) => {
-      renderOperationsRoute(path)
-      expect(screen.getByText('Login route')).toBeInTheDocument()
-    },
-  )
+  it.each([
+    '/alerts',
+    '/incidents',
+    '/threat-intelligence',
+    '/mitre',
+    '/notifications',
+    '/reports',
+  ] as const)('protects the %s route from unauthenticated access', (path) => {
+    renderOperationsRoute(path)
+    expect(screen.getByText('Login route')).toBeInTheDocument()
+  })
 })

@@ -22,11 +22,19 @@ describe('RBAC helpers', () => {
     expect(events?.roles).toEqual(['admin', 'analyst', 'viewer'])
   })
 
-  it.each(['/alerts', '/incidents', '/threat-intelligence', '/mitre'])(
-    'makes %s available to every backend-supported role',
-    (path) => {
-      const item = navigation.find((entry) => entry.to === path)
-      expect(item?.roles).toEqual(['admin', 'analyst', 'viewer'])
-    },
-  )
+  it.each([
+    '/alerts',
+    '/incidents',
+    '/threat-intelligence',
+    '/mitre',
+    '/notifications',
+  ])('makes %s available to every backend-supported role', (path) => {
+    const item = navigation.find((entry) => entry.to === path)
+    expect(item?.roles).toEqual(['admin', 'analyst', 'viewer'])
+  })
+
+  it('limits security reports to admin and analyst navigation', () => {
+    const reports = navigation.find((item) => item.to === '/reports')
+    expect(reports?.roles).toEqual(['admin', 'analyst'])
+  })
 })
