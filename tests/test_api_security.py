@@ -5,6 +5,7 @@ from app.core.cors import configure_cors
 from app.core.request_size_limit import RequestSizeLimitMiddleware
 from app.core.security_headers import SecurityHeadersMiddleware
 from app.core.trusted_hosts import configure_trusted_hosts
+from app.core.config import settings
 
 
 def create_test_app() -> FastAPI:
@@ -133,6 +134,79 @@ def test_cors_allows_local_frontend():
         ]
         == "http://localhost:3000"
     )
+
+
+def test_environment_driven_production_origin_and_host(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        settings,
+        "cors_allowed_origins",
+        "https://threatlyst.com,https://www.threatlyst.com",
+    )
+    monkeypatch.setattr(
+        settings,
+        "trusted_hosts",
+        "api.threatlyst.com,127.0.0.1",
+    )
+
+    app = create_test_app()
+    client = TestClient(app)
+    response = client.get(
+        "/health",
+        headers={
+            "host": "api.threatlyst.com",
+            "origin": "https://threatlyst.com",
+        },
+    )
+
+    assert response.status_code == 200
+    assert (
+        response.headers["access-control-allow-origin"]
+        == "https://threatlyst.com"
+    )
+
+
+def test_environment_driven_cors_rejects_unlisted_origin(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        settings,
+        "cors_allowed_origins",
+        "https://threatlyst.com",
+    )
+
+    app = create_test_app()
+    client = TestClient(app)
+    response = client.get(
+        "/health",
+        headers={
+            "host": "localhost",
+            "origin": "https://untrusted.example",
+        },
+    )
+
+    assert response.status_code == 200
+    assert "access-control-allow-origin" not in response.headers
+
+
+def test_cors_configuration_rejects_wildcard(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        settings,
+        "cors_allowed_origins",
+        "*",
+    )
+
+    try:
+        create_test_app()
+    except ValueError as error:
+        assert "cannot contain a wildcard" in str(error)
+    else:
+        raise AssertionError(
+            "Wildcard CORS configuration was accepted"
+        )
 
 
 def test_request_size_limit_rejects_large_request():

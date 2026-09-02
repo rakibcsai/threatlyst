@@ -52,7 +52,7 @@ export function LoginPage() {
         <div className="max-w-xl">
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-300">
             <Activity className="size-3.5" />
-            Security intelligence platform
+            Security Operations Platform
           </div>
           <h1 className="text-5xl font-semibold leading-[1.08] tracking-[-0.04em] text-white xl:text-6xl">
             Investigate threats.

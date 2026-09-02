@@ -1,23 +1,19 @@
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
+
 
 def configure_cors(app) -> None:
     """
     Configure browser cross-origin access for ThreatLyst.
 
-    During local development, only the known local frontend
-    origins are allowed. Production origins can be moved to
-    environment-based configuration later.
+    Origins are configured explicitly through the application
+    environment. Wildcard browser origins are not used.
     """
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        ],
+        allow_origins=settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=[
             "GET",

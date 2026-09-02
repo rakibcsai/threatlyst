@@ -1,20 +1,17 @@
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from app.core.config import settings
+
 
 def configure_trusted_hosts(app) -> None:
     """
     Restrict accepted Host headers.
 
-    Local development hosts are allowed explicitly.
-    Production domains can be added later through
-    environment-based configuration.
+    Hosts are configured explicitly through the application
+    environment while local development defaults remain safe.
     """
 
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=[
-            "127.0.0.1",
-            "localhost",
-            "testserver",
-        ],
+        allowed_hosts=settings.trusted_host_list,
     )

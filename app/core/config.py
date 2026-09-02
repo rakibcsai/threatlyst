@@ -18,6 +18,20 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # ---------------------------------------------------------
+    # Browser / Host Integration
+    # ---------------------------------------------------------
+
+    cors_allowed_origins: str = (
+        "http://localhost:3000,"
+        "http://127.0.0.1:3000,"
+        "http://localhost:5173,"
+        "http://127.0.0.1:5173"
+    )
+    trusted_hosts: str = (
+        "127.0.0.1,localhost,testserver"
+    )
+
+    # ---------------------------------------------------------
     # PostgreSQL Database
     # ---------------------------------------------------------
 
@@ -45,6 +59,33 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
     )
+
+    @staticmethod
+    def _comma_separated_values(
+        value: str,
+    ) -> list[str]:
+        return [
+            item.strip()
+            for item in value.split(",")
+            if item.strip()
+        ]
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        origins = self._comma_separated_values(
+            self.cors_allowed_origins
+        )
+        if "*" in origins:
+            raise ValueError(
+                "CORS_ALLOWED_ORIGINS cannot contain a wildcard"
+            )
+        return origins
+
+    @property
+    def trusted_host_list(self) -> list[str]:
+        return self._comma_separated_values(
+            self.trusted_hosts
+        )
 
 
 settings = Settings()

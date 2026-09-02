@@ -1,26 +1,44 @@
 # ThreatLyst Frontend
 
-ThreatLyst Frontend is the React-based Security Operations Center interface for the ThreatLyst platform.
+ThreatLyst is the React-based Security Operations Platform interface for the ThreatLyst FastAPI backend.
 
-The frontend is built with:
+## Local development
 
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- TanStack Query
-- Axios
-- Lucide React
-- Vitest
-- Testing Library
-- Oxlint
-- Prettier
+Requirements: Node.js 22 or later and npm.
 
-## Local Development
+```bash
+npm ci
+npm run dev
+```
 
-The frontend expects the ThreatLyst FastAPI backend to be available at:
+The default development API is `http://127.0.0.1:8000`. Override it in an ignored `.env.local` when needed:
 
 ```text
-http://127.0.0.1:8000
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+## Production build
+
+Set an HTTPS API origin before building a cross-origin deployment:
+
+```text
+VITE_API_BASE_URL=https://api.threatlyst.com
+```
+
+```bash
+npm ci
+npm run build
+```
+
+Deploy the generated `dist/` directory. The host must rewrite frontend routes to `index.html` so React Router deep links and refreshes work.
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for domain, HTTPS, CORS, SPA fallback, security-header, and hosting guidance.
+
+## Quality checks
+
+```bash
+npm run build
+npm run lint
+npm test
+npm run format:check
 ```
