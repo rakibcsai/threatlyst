@@ -23,6 +23,7 @@ export function DashboardPage() {
     useDashboardStats()
 
   if (isLoading) return <DashboardSkeleton />
+
   if (error || !data)
     return (
       <DashboardError
@@ -48,17 +49,21 @@ export function DashboardPage() {
               <Activity className="size-3.5" />
               Live operational overview
             </div>
+
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.025em] text-white md:text-3xl">
               SOC Dashboard
             </h1>
+
             <p className="mt-2 text-sm text-slate-500">
               AI-assisted risk posture and security-event intelligence.
             </p>
           </div>
+
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-600">
               {updated ? `Updated ${updated}` : 'Current snapshot'}
             </span>
+
             <Button
               variant="secondary"
               onClick={() => void refetch()}
@@ -87,6 +92,7 @@ export function DashboardPage() {
                 icon={Siren}
                 tone="cyan"
               />
+
               <StatCard
                 label="Critical risk"
                 value={data.risk_levels.critical}
@@ -94,6 +100,7 @@ export function DashboardPage() {
                 icon={ShieldAlert}
                 tone="rose"
               />
+
               <StatCard
                 label="High risk"
                 value={data.risk_levels.high}
@@ -101,14 +108,16 @@ export function DashboardPage() {
                 icon={TriangleAlert}
                 tone="orange"
               />
+
               <StatCard
-                label="AI anomalies"
+                label="ML anomalies"
                 value={data.anomalies}
-                detail="Anomalous events identified"
+                detail="Anomalies identified by ML model"
                 icon={BrainCircuit}
                 tone="violet"
               />
             </section>
+
             <section className="mt-4 grid gap-4 xl:grid-cols-5">
               <DashboardCard
                 title="Risk level distribution"
@@ -117,14 +126,16 @@ export function DashboardPage() {
               >
                 <RiskDistributionChart riskLevels={data.risk_levels} />
               </DashboardCard>
+
               <DashboardCard
                 title="AI verdict distribution"
-                description="Benign and suspicious AI classifications"
+                description="Benign and suspicious hybrid classifications"
                 className="xl:col-span-2"
               >
                 <VerdictDonutChart verdicts={data.verdicts} />
               </DashboardCard>
             </section>
+
             <section className="mt-4 grid gap-4 lg:grid-cols-3">
               <DashboardCard
                 title="Event categories"
@@ -135,18 +146,20 @@ export function DashboardPage() {
                   emptyLabel="No event category data available"
                 />
               </DashboardCard>
+
               <DashboardCard
                 title="Attack categories"
-                description="AI-classified attack activity"
+                description="Hybrid-classified attack activity"
               >
                 <RankedMetricList
                   data={toMetricData(data.attack_categories)}
                   emptyLabel="No attack category data available"
                 />
               </DashboardCard>
+
               <DashboardCard
                 title="MITRE ATT&CK activity"
-                description="Techniques mapped during AI analysis"
+                description="Techniques mapped during hybrid analysis"
               >
                 <RankedMetricList
                   data={toMetricData(data.mitre_techniques)}
