@@ -20,7 +20,7 @@ class ThreatDetectionModel:
     def __init__(self):
         self.model = IsolationForest(
             n_estimators=200,
-            contamination="auto",
+            contamination=0.18,
             random_state=42,
         )
 
@@ -184,7 +184,7 @@ class ThreatDetectionModel:
 
 
 # ==============================================================
-# ANOMALY SCORE → CONFIDENCE
+# ANOMALY SCORE -> CONFIDENCE
 # ==============================================================
 
 def anomaly_score_to_confidence(

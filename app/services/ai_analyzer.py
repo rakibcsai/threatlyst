@@ -81,16 +81,23 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     )
 
     # =========================================================
-    # 4. Calculate operational risk score
+    # 4. Determine whether ML considers the event anomalous
+    # =========================================================
+
+    is_ml_anomaly = prediction == "anomaly"
+
+    # =========================================================
+    # 5. Calculate operational risk score
     # =========================================================
 
     risk_score = calculate_risk_score(
         confidence,
         event.severity,
+        is_anomaly=is_ml_anomaly,
     )
 
     # =========================================================
-    # 5. Classify SOC risk level
+    # 6. Classify SOC risk level
     # =========================================================
 
     risk_level = classify_risk_level(
@@ -98,7 +105,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     )
 
     # =========================================================
-    # 6. Collect security indicators
+    # 7. Collect security indicators
     # =========================================================
 
     indicators: list[str] = []
@@ -116,7 +123,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
         indicators.append(event.hostname)
 
     # =========================================================
-    # 7. Determine attack intelligence mapping
+    # 8. Determine attack intelligence mapping
     # =========================================================
 
     event_type = event.event_type.lower().strip()
@@ -129,7 +136,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     attack_category = attack_info["attack_category"]
 
     # =========================================================
-    # 8. Determine verdict
+    # 9. Determine verdict
     # =========================================================
     #
     # An ML anomaly is considered suspicious.
@@ -139,7 +146,6 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     # the event normal.
     # =========================================================
 
-    is_ml_anomaly = prediction == "anomaly"
     is_high_risk = risk_score >= 0.80
 
     if is_ml_anomaly or is_high_risk:
@@ -158,6 +164,8 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
 
         verdict = "Benign"
 
+        attack_category = "Normal Activity"
+
         mitre_techniques = []
 
         recommended_actions = [
@@ -165,7 +173,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
         ]
 
     # =========================================================
-    # 9. Build explainable AI reasoning
+    # 10. Build explainable AI reasoning
     # =========================================================
 
     explanation = build_explanation(
@@ -181,7 +189,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     )
 
     # =========================================================
-    # 10. Return structured AI analysis
+    # 11. Return structured AI analysis
     # =========================================================
 
     return AIAnalysis(
