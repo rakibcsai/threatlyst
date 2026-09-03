@@ -28,6 +28,10 @@ def detect_failed_login_burst(
             "login_failed",
             "failed_login",
             "authentication_failure",
+            "brute_force",
+            "bruteforce",
+            "password_spray",
+            "credential_attack",
         }
         and failed_attempts >= 5
     ):
@@ -39,7 +43,7 @@ def detect_failed_login_burst(
             description=(
                 "Multiple failed authentication attempts "
                 "were detected and may indicate a brute "
-                "force attack."
+                "force or credential attack."
             ),
             mitre_technique_id="T1110",
         )
@@ -122,6 +126,77 @@ def detect_suspicious_powershell(
     return None
 
 
+def detect_privilege_escalation(
+    event: dict[str, Any],
+) -> DetectionMatch | None:
+    event_type = str(
+        event.get("event_type", "")
+    ).lower()
+
+    if event_type in {
+        "privilege_escalation",
+        "privilege_elevation",
+        "elevation_of_privilege",
+    }:
+        return DetectionMatch(
+            rule_id="TL-PRIV-001",
+            rule_name="Potential Privilege Escalation",
+            severity="critical",
+            confidence=90,
+            description=(
+                "The event indicates possible privilege "
+                "escalation or elevated-access activity."
+            ),
+            mitre_technique_id="T1068",
+        )
+
+    return None
+
+
+def detect_data_exfiltration(
+    event: dict[str, Any],
+) -> DetectionMatch | None:
+    event_type = str(
+        event.get("event_type", "")
+    ).lower()
+
+    transfer_size_mb = float(
+        event.get("transfer_size_mb", 0) or 0
+    )
+
+    bytes_sent = float(
+        event.get("bytes_sent", 0) or 0
+    )
+
+    large_transfer = (
+        transfer_size_mb >= 100
+        or bytes_sent >= 100 * 1024 * 1024
+    )
+
+    if (
+        event_type in {
+            "data_exfiltration",
+            "exfiltration",
+            "large_data_transfer",
+        }
+        and large_transfer
+    ):
+        return DetectionMatch(
+            rule_id="TL-EXFIL-001",
+            rule_name="Potential Data Exfiltration",
+            severity="critical",
+            confidence=92,
+            description=(
+                "A large outbound data transfer pattern "
+                "consistent with possible exfiltration "
+                "was detected."
+            ),
+            mitre_technique_id="T1041",
+        )
+
+    return None
+
+
 def run_detection_rules(
     event: dict[str, Any],
 ) -> list[DetectionMatch]:
@@ -129,6 +204,8 @@ def run_detection_rules(
         detect_failed_login_burst,
         detect_malware_execution,
         detect_suspicious_powershell,
+        detect_privilege_escalation,
+        detect_data_exfiltration,
     ]
 
     matches: list[DetectionMatch] = []
