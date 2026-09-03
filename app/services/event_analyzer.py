@@ -109,6 +109,15 @@ def analyze_event(event: SecurityEvent) -> AnalysisResult:
 
         reasons.append(reason)
 
+    # ---------------------------------------------------------
+    # Capture matched rule IDs
+    # ---------------------------------------------------------
+
+    matched_rules = [
+        match.rule_id
+        for match in detection_matches
+    ]
+
     # Prevent scores greater than 100.
     risk_score = min(risk_score, 100)
 
@@ -133,4 +142,5 @@ def analyze_event(event: SecurityEvent) -> AnalysisResult:
         risk_score=risk_score,
         risk_level=risk_level,
         reasons=reasons,
+        matched_rules=matched_rules,
     )

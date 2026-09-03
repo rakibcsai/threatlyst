@@ -52,7 +52,11 @@ def receive_event(
 ):
 
     rule_analysis = analyze_event(event)
-    ai_analysis = analyze_with_ai(event)
+
+    ai_analysis = analyze_with_ai(
+        event,
+        rule_analysis=rule_analysis,
+    )
 
     db = SessionLocal()
 

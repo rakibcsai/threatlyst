@@ -1,5 +1,6 @@
 from app.models.security_event import SecurityEvent
 from app.models.ai_analysis import AIAnalysis
+from app.models.analysis_result import AnalysisResult
 
 from app.ai.features import extract_features
 from app.ai.model_manager import ml_model_manager
@@ -18,33 +19,23 @@ from app.ai.risk_scoring import (
 from app.ai.explanation import build_explanation
 
 
-def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
+def analyze_with_ai(
+    event: SecurityEvent,
+    rule_analysis: AnalysisResult | None = None,
+) -> AIAnalysis:
     """
-    Analyze a security event using the ThreatLyst AI detection pipeline.
+    Analyze a security event using the ThreatLyst hybrid
+    AI detection pipeline.
 
-    Pipeline:
+    Detection signals:
+    - Isolation Forest anomaly detection
+    - High-confidence detection rules
+    - Event severity and operational risk
 
-        SecurityEvent
-            ↓
-        Feature extraction
-            ↓
-        Isolation Forest prediction
-            ↓
-        ML confidence
-            ↓
-        Operational risk score
-            ↓
-        SOC risk classification
-            ↓
-        MITRE ATT&CK mapping
-            ↓
-        Recommended response
-            ↓
-        Explainable AI result
-
-    The ML model determines whether the event is anomalous.
-    Operational risk scoring provides additional context based
-    on anomaly confidence and event severity.
+    A security event can therefore be considered suspicious
+    when either the ML model detects anomalous behavior or an
+    existing ThreatLyst detection rule identifies a known
+    malicious pattern.
     """
 
     # =========================================================
@@ -53,11 +44,6 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
 
     features = extract_features(event)
 
-    # Defensive validation.
-    #
-    # The current ThreatLyst model uses 15 features. Keeping
-    # this validation here helps detect accidental feature
-    # changes before they reach the ML model.
     if len(features) != 15:
         raise ValueError(
             f"Expected 15 ML features, got {len(features)}."
@@ -81,10 +67,25 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     )
 
     # =========================================================
-    # 4. Determine whether ML considers the event anomalous
+    # 4. Determine detection signals
     # =========================================================
 
     is_ml_anomaly = prediction == "anomaly"
+
+    matched_rules = (
+        rule_analysis.matched_rules
+        if rule_analysis is not None
+        else []
+    )
+
+    is_rule_detected = len(matched_rules) > 0
+
+    # A confirmed rule match is also treated as a security
+    # detection for operational risk-scoring purposes.
+    is_security_detection = (
+        is_ml_anomaly
+        or is_rule_detected
+    )
 
     # =========================================================
     # 5. Calculate operational risk score
@@ -93,7 +94,7 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
     risk_score = calculate_risk_score(
         confidence,
         event.severity,
-        is_anomaly=is_ml_anomaly,
+        is_anomaly=is_security_detection,
     )
 
     # =========================================================
@@ -133,22 +134,21 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
         DEFAULT_ATTACK_MAPPING,
     )
 
-    attack_category = attack_info["attack_category"]
+    attack_category = attack_info[
+        "attack_category"
+    ]
 
     # =========================================================
-    # 9. Determine verdict
-    # =========================================================
-    #
-    # An ML anomaly is considered suspicious.
-    #
-    # A very high operational risk score also results in a
-    # suspicious verdict even if the ML model itself considers
-    # the event normal.
+    # 9. Determine final hybrid verdict
     # =========================================================
 
     is_high_risk = risk_score >= 0.80
 
-    if is_ml_anomaly or is_high_risk:
+    if (
+        is_ml_anomaly
+        or is_rule_detected
+        or is_high_risk
+    ):
 
         verdict = "Suspicious"
 
@@ -187,6 +187,15 @@ def analyze_with_ai(event: SecurityEvent) -> AIAnalysis:
         attack_category=attack_category,
         mitre_techniques=mitre_techniques,
     )
+
+    # Add rule context when the hybrid rule engine contributed
+    # to the final verdict.
+    if is_rule_detected:
+        explanation += (
+            " ThreatLyst detection rule(s) matched: "
+            + ", ".join(matched_rules)
+            + "."
+        )
 
     # =========================================================
     # 11. Return structured AI analysis
