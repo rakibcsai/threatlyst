@@ -197,6 +197,104 @@ def detect_data_exfiltration(
     return None
 
 
+def detect_lateral_movement(
+    event: dict[str, Any],
+) -> DetectionMatch | None:
+    event_type = str(
+        event.get("event_type", "")
+    ).lower()
+
+    protocol = str(
+        event.get("protocol", "")
+    ).upper()
+
+    destination_port = int(
+        event.get("destination_port", 0) or 0
+    )
+
+    connection_count = int(
+        event.get("connection_count", 0) or 0
+    )
+
+    lateral_event = event_type in {
+        "lateral_movement",
+        "smb_lateral_movement",
+        "remote_service_access",
+    }
+
+    smb_evidence = (
+        protocol == "SMB"
+        or destination_port == 445
+    )
+
+    repeated_activity = connection_count >= 5
+
+    if (
+        lateral_event
+        and smb_evidence
+        and repeated_activity
+    ):
+        return DetectionMatch(
+            rule_id="TL-LAT-001",
+            rule_name="Suspicious SMB Lateral Movement",
+            severity="high",
+            confidence=90,
+            description=(
+                "Repeated SMB activity associated with "
+                "lateral movement was detected between "
+                "internal systems."
+            ),
+            mitre_technique_id="T1021.002",
+        )
+
+    return None
+
+
+def detect_suspicious_login(
+    event: dict[str, Any],
+) -> DetectionMatch | None:
+    event_type = str(
+        event.get("event_type", "")
+    ).lower()
+
+    usual_source = event.get(
+        "usual_source"
+    )
+
+    successful_login = bool(
+        event.get("successful_login", False)
+    )
+
+    suspicious_event = event_type in {
+        "suspicious_login",
+        "unusual_login",
+        "anomalous_login",
+    }
+
+    unusual_source = usual_source is False
+
+    if (
+        suspicious_event
+        and unusual_source
+        and successful_login
+    ):
+        return DetectionMatch(
+            rule_id="TL-AUTH-002",
+            rule_name="Successful Login from Unusual Source",
+            severity="medium",
+            confidence=88,
+            description=(
+                "A successful authentication was detected "
+                "from a source that is unusual for the "
+                "account and may indicate misuse of valid "
+                "credentials."
+            ),
+            mitre_technique_id="T1078",
+        )
+
+    return None
+
+
 def run_detection_rules(
     event: dict[str, Any],
 ) -> list[DetectionMatch]:
@@ -206,6 +304,8 @@ def run_detection_rules(
         detect_suspicious_powershell,
         detect_privilege_escalation,
         detect_data_exfiltration,
+        detect_lateral_movement,
+        detect_suspicious_login,
     ]
 
     matches: list[DetectionMatch] = []
