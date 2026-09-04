@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
-from jwt import ExpiredSignatureError, InvalidTokenError
+from jwt import exceptions as jwt_exceptions
 
 from app.core.database import SessionLocal
 from app.core.security import decode_access_token
@@ -19,17 +19,31 @@ from app.db.user_session_repository import (
 bearer_scheme = HTTPBearer()
 
 
+def _authentication_error(
+    detail: str = "Invalid authentication credentials.",
+) -> HTTPException:
+    """
+    Create a consistent HTTP 401 authentication error.
+    """
+
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={
+            "WWW-Authenticate": "Bearer",
+        },
+    )
+
+
 def _decode_authenticated_identity(
     token: str,
 ) -> tuple[int, str]:
     """
-    Decode a ThreatLyst access token and return:
+    Decode an authenticated ThreatLyst access token.
 
-    - authenticated user ID
-    - ThreatLyst session ID
-
-    This helper is shared by user and session
-    authentication dependencies.
+    Every valid authenticated token must contain:
+    - sub: authenticated user ID
+    - sid: authenticated session ID
     """
 
     try:
@@ -39,30 +53,33 @@ def _decode_authenticated_identity(
         session_id = payload.get("sid")
 
         if subject is None or session_id is None:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid authentication token.",
-            )
+            raise _authentication_error()
 
-        user_id = int(subject)
+        try:
+            user_id = int(subject)
+        except (TypeError, ValueError):
+            raise _authentication_error() from None
 
-        return user_id, str(session_id)
+        if (
+            not isinstance(session_id, str)
+            or not session_id.strip()
+        ):
+            raise _authentication_error()
 
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication token has expired.",
-        )
+        return user_id, session_id
 
-    except (
-        InvalidTokenError,
-        ValueError,
-        TypeError,
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication token.",
-        )
+    except HTTPException:
+        raise
+
+    except jwt_exceptions.ExpiredSignatureError:
+        raise _authentication_error(
+            "Authentication token has expired."
+        ) from None
+
+    except jwt_exceptions.PyJWTError:
+        raise _authentication_error(
+            "Invalid or expired authentication token."
+        ) from None
 
 
 def get_current_session_id(
@@ -71,20 +88,12 @@ def get_current_session_id(
     ),
 ) -> str:
     """
-    Return the ThreatLyst session ID associated with
-    the current Bearer JWT.
-
-    This dependency is useful for session-specific
-    operations such as logout.
-
-    Full session validity is still enforced by the
-    database-backed authentication flow where needed.
+    Return the authenticated ThreatLyst session ID
+    contained in the access token.
     """
 
-    token = credentials.credentials
-
     _, session_id = _decode_authenticated_identity(
-        token
+        credentials.credentials
     )
 
     return session_id
@@ -96,15 +105,24 @@ def get_current_user(
     ),
 ) -> UserDB:
     """
-    Validate the Bearer JWT, confirm that the associated
-    ThreatLyst database session is still valid, update
-    session activity, and return the authenticated user.
+    Resolve and validate the currently authenticated user.
+
+    Authentication is valid only when:
+    - the JWT is valid,
+    - the referenced user exists,
+    - the user is active,
+    - the JWT contains a valid session ID,
+    - the session belongs to the authenticated user,
+    - the session has not been revoked,
+    - the session has not been logged out,
+    - the session has not expired.
+
+    Valid authenticated requests also update the
+    session's last-seen timestamp.
     """
 
-    token = credentials.credentials
-
-    user_id, session_id = (
-        _decode_authenticated_identity(token)
+    user_id, session_id = _decode_authenticated_identity(
+        credentials.credentials
     )
 
     db = SessionLocal()
@@ -117,87 +135,80 @@ def get_current_user(
         )
 
         if user is None:
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authenticated user does not exist."
-                ),
+            raise _authentication_error(
+                "Authenticated user not found."
             )
 
         if not user.is_active:
             raise HTTPException(
-                status_code=403,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="User account is inactive.",
             )
 
-        session = get_user_session_by_session_id(
-            db,
-            session_id,
+        user_session = (
+            get_user_session_by_session_id(
+                db,
+                session_id,
+            )
         )
 
-        if session is None:
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authentication session "
-                    "does not exist."
-                ),
+        if user_session is None:
+            raise _authentication_error(
+                "Authentication session not found."
             )
 
-        if session.user_id != user_id:
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authentication session is invalid."
-                ),
+        if user_session.user_id != user.id:
+            raise _authentication_error(
+                "Invalid authentication session."
             )
 
-        if session.revoked:
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authentication session "
-                    "has been revoked."
-                ),
+        if (
+            user_session.revoked
+            or user_session.status == "revoked"
+        ):
+            raise _authentication_error(
+                "Authentication session has been revoked."
+            )
+
+        if user_session.status == "logged_out":
+            raise _authentication_error(
+                "Authentication session has been logged out."
             )
 
         now = datetime.now(timezone.utc)
 
-        if session.expires_at <= now:
-            if session.status != "expired":
-                session.status = "expired"
-                db.commit()
+        if user_session.expires_at <= now:
+            user_session.status = "expired"
 
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authentication session "
-                    "has expired."
-                ),
+            db.commit()
+
+            raise _authentication_error(
+                "Authentication session has expired."
             )
 
-        if session.status in {
-            "logged_out",
-            "revoked",
-            "expired",
-        }:
-            raise HTTPException(
-                status_code=401,
-                detail=(
-                    "Authentication session "
-                    "is no longer active."
-                ),
+        if user_session.status == "expired":
+            raise _authentication_error(
+                "Authentication session has expired."
             )
 
-        if session.status != "active":
-            session.status = "active"
+        user_session.status = "active"
 
         touch_user_session(
-            db=db,
-            session=session,
+            db,
+            user_session,
             commit=True,
         )
 
+        # touch_user_session() commits the transaction.
+        # SQLAlchemy normally expires loaded ORM attributes
+        # after a commit.
+        #
+        # Refresh UserDB while it is still attached to the
+        # database session. This prevents FastAPI/Pydantic
+        # from raising DetachedInstanceError when serializing
+        # fields such as id, username, email, role, and
+        # is_active after this database session is closed.
+        db.refresh(user)
         db.expunge(user)
 
         return user
