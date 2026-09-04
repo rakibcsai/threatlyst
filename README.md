@@ -14,8 +14,8 @@ The project brings together AI, cybersecurity engineering, SOC operations, threa
 
 ### Demo Analyst Account
 
-- **Username:** `demo_analyst`
-- **Password:** `[DEMO PASSWORD HERE]`
+- **Username:** `demoanalyst`
+- **Password:** `Password1&2`
 
 The demo account is intentionally restricted to Analyst-level permissions and is intended only for exploring the interface and demonstration workflows.
 
