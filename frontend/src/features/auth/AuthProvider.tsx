@@ -3,7 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import { setUnauthorizedHandler } from '../../lib/api-client'
 import { authStorage } from '../../lib/auth-storage'
 import type { LoginCredentials, User } from '../../types/auth'
-import { getCurrentUser, loginRequest } from './auth-api'
+import {
+  getCurrentUser,
+  loginRequest,
+  logoutRequest,
+} from './auth-api'
 import { AuthContext } from './auth-context'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -11,22 +15,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const logout = useCallback(() => {
+  const clearLocalAuth = useCallback(() => {
     authStorage.clear()
     setUser(null)
     queryClient.clear()
   }, [queryClient])
 
+  const logout = useCallback(async () => {
+    try {
+      await logoutRequest()
+    } catch {
+      // Local logout must still succeed even if the
+      // backend logout request fails or the token has
+      // already expired.
+    } finally {
+      clearLocalAuth()
+    }
+  }, [clearLocalAuth])
+
   useEffect(() => {
-    setUnauthorizedHandler(logout)
-    return () => setUnauthorizedHandler(undefined)
-  }, [logout])
+    setUnauthorizedHandler(clearLocalAuth)
+
+    return () => {
+      setUnauthorizedHandler(undefined)
+    }
+  }, [clearLocalAuth])
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     setIsLoading(true)
+
     try {
       const token = await loginRequest(credentials)
+
       authStorage.set(token.access_token)
+
       try {
         const profile = await getCurrentUser()
         setUser(profile)
@@ -40,9 +62,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, isAuthenticated: user !== null, isLoading, login, logout }),
+    () => ({
+      user,
+      isAuthenticated: user !== null,
+      isLoading,
+      login,
+      logout,
+    }),
     [user, isLoading, login, logout],
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  )
 }

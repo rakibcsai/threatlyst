@@ -39,9 +39,17 @@ def log_user_action(
     status: str = "success",
     details: str | None = None,
     request: Request | None = None,
+    commit: bool = True,
 ) -> AuditLogDB:
     """
     Create an audit record for a user-initiated action.
+
+    When commit=True, the audit record is committed
+    immediately.
+
+    When commit=False, the audit record is flushed into
+    the current transaction so a higher-level workflow
+    can commit related changes atomically.
     """
 
     return create_audit_log(
@@ -54,4 +62,5 @@ def log_user_action(
         status=status,
         details=details,
         ip_address=get_client_ip(request),
+        commit=commit,
     )

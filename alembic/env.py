@@ -9,6 +9,7 @@ from app.db.security_event import SecurityEventDB
 from app.db.analysis_result import AnalysisResultDB
 from app.db.ai_analysis import AIAnalysisDB
 from app.db.user import UserDB
+from app.db.user_session import UserSessionDB
 from app.db.api_key import APIKeyDB
 from app.db.alert import AlertDB
 from app.db.incident import IncidentDB
@@ -16,6 +17,7 @@ from app.db.threat_indicator import ThreatIndicatorDB
 from app.db.mitre_technique import MITRETechniqueDB
 from app.db.audit_log import AuditLogDB
 from app.db.notification import NotificationDB
+
 
 config = context.config
 

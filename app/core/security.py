@@ -37,9 +37,11 @@ def verify_password(
 def create_access_token(
     subject: str,
     role: str,
+    session_id: str,
 ) -> str:
     """
-    Create a signed JWT access token.
+    Create a signed JWT access token tied to
+    a specific ThreatLyst user session.
     """
 
     now = datetime.now(timezone.utc)
@@ -51,6 +53,7 @@ def create_access_token(
     payload = {
         "sub": subject,
         "role": role,
+        "sid": session_id,
         "iat": now,
         "exp": expires_at,
     }
@@ -66,8 +69,9 @@ def decode_access_token(token: str) -> dict:
     """
     Decode and validate a JWT access token.
 
-    Required claims ensure malformed or incomplete tokens
-    cannot be accepted by ThreatLyst.
+    Required claims ensure malformed, incomplete,
+    or session-unbound tokens cannot be accepted
+    by ThreatLyst.
     """
 
     return jwt.decode(
@@ -78,6 +82,7 @@ def decode_access_token(token: str) -> dict:
             "require": [
                 "sub",
                 "role",
+                "sid",
                 "iat",
                 "exp",
             ],

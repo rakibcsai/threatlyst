@@ -16,6 +16,7 @@ from app.api.reports import router as reports_router
 from app.api.threat_intelligence import (
     router as threat_intelligence_router,
 )
+from app.api.user_sessions import router as user_sessions_router
 
 from app.core.cors import configure_cors
 from app.core.logging_config import configure_logging
@@ -39,7 +40,8 @@ app = FastAPI(
         "ingestion, automated analysis, alert management, "
         "incident management, threat intelligence, MITRE "
         "ATT&CK intelligence, notifications, reporting, "
-        "audit logging, and operational monitoring.\n\n"
+        "audit logging, authenticated-session monitoring, "
+        "and operational monitoring.\n\n"
         "Authentication methods:\n"
         "- Bearer JWT for authenticated ThreatLyst users.\n"
         "- X-API-Key for external security-event ingestion.\n\n"
@@ -58,7 +60,7 @@ app = FastAPI(
             "name": "Authentication",
             "description": (
                 "User authentication, account creation, "
-                "and current-user profile operations."
+                "logout, and current-user profile operations."
             ),
         },
         {
@@ -115,6 +117,13 @@ app = FastAPI(
             ),
         },
         {
+            "name": "Admin Sessions",
+            "description": (
+                "Administrative monitoring and revocation "
+                "of authenticated user sessions."
+            ),
+        },
+        {
             "name": "Notifications",
             "description": (
                 "User and global security notifications."
@@ -161,6 +170,7 @@ app.include_router(incidents_router)
 app.include_router(threat_intelligence_router)
 app.include_router(mitre_intelligence_router)
 app.include_router(audit_logs_router)
+app.include_router(user_sessions_router)
 app.include_router(notifications_router)
 app.include_router(reports_router)
 app.include_router(metrics_router)

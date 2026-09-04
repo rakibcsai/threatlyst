@@ -14,22 +14,25 @@ def test_valid_access_token_decodes():
     token = create_access_token(
         subject="123",
         role="admin",
+        session_id="test-session-123",
     )
 
     payload = decode_access_token(token)
 
     assert payload["sub"] == "123"
     assert payload["role"] == "admin"
+    assert payload["sid"] == "test-session-123"
     assert "iat" in payload
     assert "exp" in payload
 
 
-def test_token_missing_required_role_claim_is_rejected():
+def test_token_missing_required_claim_is_rejected():
     now = datetime.now(timezone.utc)
 
     token = jwt.encode(
         {
             "sub": "123",
+            "role": "admin",
             "iat": now,
             "exp": now + timedelta(minutes=5),
         },
@@ -50,6 +53,7 @@ def test_expired_token_is_rejected():
         {
             "sub": "123",
             "role": "admin",
+            "sid": "expired-session-123",
             "iat": now - timedelta(minutes=10),
             "exp": now - timedelta(minutes=5),
         },

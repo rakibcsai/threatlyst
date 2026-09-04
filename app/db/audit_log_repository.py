@@ -14,7 +14,18 @@ def create_audit_log(
     status: str = "success",
     details: str | None = None,
     ip_address: str | None = None,
+    commit: bool = True,
 ) -> AuditLogDB:
+    """
+    Create an audit log record.
+
+    When commit=True, commit immediately.
+
+    When commit=False, flush the record into the
+    current transaction so a higher-level service
+    can commit related changes atomically.
+    """
+
     audit_log = AuditLogDB(
         user_id=user_id,
         username=username,
@@ -27,8 +38,12 @@ def create_audit_log(
     )
 
     db.add(audit_log)
-    db.commit()
-    db.refresh(audit_log)
+
+    if commit:
+        db.commit()
+        db.refresh(audit_log)
+    else:
+        db.flush()
 
     return audit_log
 

@@ -66,7 +66,7 @@ function renderEvents(role: UserRole = 'analyst') {
     isAuthenticated: true,
     isLoading: false,
     login: async () => undefined,
-    logout: () => undefined,
+    logout: async () => undefined,
   }
   return render(
     <QueryClientProvider client={queryClient}>

@@ -1,7 +1,13 @@
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 
-from app.core.auth_dependencies import get_current_user
+from app.core.auth_dependencies import (
+    get_current_session_id,
+    get_current_user,
+)
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.login_rate_limiter import (
@@ -13,6 +19,11 @@ from app.core.security import create_access_token
 
 from app.db.user import UserDB
 from app.db.user_repository import create_user
+from app.db.user_session_repository import (
+    create_user_session,
+    get_user_session_by_session_id,
+    mark_session_logged_out,
+)
 
 from app.models.auth import LoginRequest, TokenResponse
 from app.models.user import UserCreate, UserResponse
@@ -22,6 +33,7 @@ from app.services.audit_service import (
     log_user_action,
 )
 from app.services.auth_service import authenticate_user
+from app.services.session_metadata import parse_user_agent
 
 
 router = APIRouter(
@@ -141,11 +153,16 @@ def login(
     request: Request,
 ):
     """
-    Authenticate a user with dual brute-force protection.
+    Authenticate a user with dual brute-force protection
+    and create a database-backed ThreatLyst session.
 
     ThreatLyst applies:
     - per IP + account rate limiting
     - per IP rate limiting
+    - unique session IDs for every successful login
+    - database-backed session tracking
+    - browser / OS / device metadata
+    - login audit logging
 
     Failed authentication attempts are counted by both
     limiters. A successful login resets only the
@@ -265,26 +282,97 @@ def login(
         user_id = user.id
         user_role = user.role
 
+        # -----------------------------------------------------
+        # Generate a unique session identifier.
+        #
+        # Every successful login receives its own session,
+        # even when multiple people use the same account.
+        # -----------------------------------------------------
+
+        session_id = uuid4().hex
+
+        now = datetime.now(timezone.utc)
+
+        expires_at = now + timedelta(
+            minutes=(
+                settings
+                .jwt_access_token_expire_minutes
+            )
+        )
+
+        # -----------------------------------------------------
+        # Capture raw User-Agent and derive browser,
+        # operating system, and device information.
+        # -----------------------------------------------------
+
+        user_agent = request.headers.get(
+            "user-agent"
+        )
+
+        session_metadata = parse_user_agent(
+            user_agent
+        )
+
+        # -----------------------------------------------------
+        # Create database session without committing yet.
+        # -----------------------------------------------------
+
+        create_user_session(
+            db=db,
+            session_id=session_id,
+            user_id=user_id,
+            expires_at=expires_at,
+            ip_address=client_ip,
+            country=None,
+            region=None,
+            city=None,
+            user_agent=user_agent,
+            browser=session_metadata.browser,
+            operating_system=(
+                session_metadata.operating_system
+            ),
+            device_type=session_metadata.device_type,
+            commit=False,
+        )
+
+        # -----------------------------------------------------
+        # Create JWT bound to this exact session.
+        # -----------------------------------------------------
+
         access_token = create_access_token(
             subject=str(user_id),
             role=user_role,
+            session_id=session_id,
         )
 
-        login_rate_limiter.reset(
-            account_client_key
-        )
+        # -----------------------------------------------------
+        # Store successful login audit event in the same
+        # database transaction.
+        # -----------------------------------------------------
 
         log_user_action(
             db=db,
             user=user,
             action="login_success",
             resource_type="authentication",
-            resource_id=str(user_id),
+            resource_id=session_id,
             status="success",
             details=(
-                "User authenticated successfully."
+                "User authenticated successfully and "
+                "a new ThreatLyst session was created."
             ),
             request=request,
+            commit=False,
+        )
+
+        # -----------------------------------------------------
+        # Commit session + audit log atomically.
+        # -----------------------------------------------------
+
+        db.commit()
+
+        login_rate_limiter.reset(
+            account_client_key
         )
 
         return {
@@ -296,6 +384,96 @@ def login(
                 * 60
             ),
         }
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        db.rollback()
+        raise
+
+    finally:
+        db.close()
+
+
+@router.post(
+    "/logout",
+    status_code=204,
+)
+def logout(
+    request: Request,
+    session_id: str = Depends(
+        get_current_session_id
+    ),
+):
+    """
+    Log out only the current ThreatLyst session.
+
+    Other active sessions belonging to the same user
+    remain valid.
+    """
+
+    db = SessionLocal()
+
+    try:
+        session = get_user_session_by_session_id(
+            db,
+            session_id,
+        )
+
+        if session is None:
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Authentication session "
+                    "does not exist."
+                ),
+            )
+
+        if session.status in {
+            "logged_out",
+            "revoked",
+            "expired",
+        }:
+            return
+
+        mark_session_logged_out(
+            db=db,
+            session=session,
+            commit=False,
+        )
+
+        user = (
+            db.query(UserDB)
+            .filter(
+                UserDB.id == session.user_id
+            )
+            .first()
+        )
+
+        log_user_action(
+            db=db,
+            user=user,
+            action="logout",
+            resource_type="authentication",
+            resource_id=session.session_id,
+            status="success",
+            details=(
+                "ThreatLyst session logged out "
+                "successfully."
+            ),
+            request=request,
+            commit=False,
+        )
+
+        db.commit()
+
+    except HTTPException:
+        raise
+
+    except Exception:
+        db.rollback()
+        raise
 
     finally:
         db.close()

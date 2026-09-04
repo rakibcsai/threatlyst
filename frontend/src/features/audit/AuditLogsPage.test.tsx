@@ -50,7 +50,7 @@ function renderRole(role: UserRole) {
     isAuthenticated: true,
     isLoading: false,
     login: async () => undefined,
-    logout: () => undefined,
+    logout: async () => undefined,
   }
   return render(
     <QueryClientProvider client={client()}>

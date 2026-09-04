@@ -10,6 +10,7 @@ import {
   MailWarning,
   KeyRound,
   HeartPulse,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '../types/auth'
@@ -75,6 +76,12 @@ export const navigation: NavigationItem[] = [
     to: '/system-health',
     icon: HeartPulse,
     roles: ['admin', 'analyst', 'viewer'],
+  },
+  {
+    label: 'User Sessions',
+    to: '/admin/sessions',
+    icon: UsersRound,
+    roles: ['admin'],
   },
   {
     label: 'Audit Logs',

@@ -13,7 +13,7 @@ const publicAuth: AuthContextValue = {
   isAuthenticated: false,
   isLoading: false,
   login: async () => undefined,
-  logout: () => undefined,
+  logout: async () => undefined,
 }
 
 const authenticatedAuth: AuthContextValue = {

@@ -13,7 +13,7 @@ const baseAuth: AuthContextValue = {
   isAuthenticated: false,
   isLoading: false,
   login: async () => undefined,
-  logout: () => undefined,
+  logout: async () => undefined,
 }
 
 function renderRoute(auth: AuthContextValue) {

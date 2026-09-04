@@ -20,7 +20,7 @@ const auth: AuthContextValue = {
   isAuthenticated: true,
   isLoading: false,
   login: async () => undefined,
-  logout: () => undefined,
+  logout: async () => undefined,
 }
 
 function LocationView() {

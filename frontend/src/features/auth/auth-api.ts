@@ -6,10 +6,16 @@ export async function loginRequest(credentials: LoginCredentials) {
     '/api/auth/login',
     credentials,
   )
+
   return data
 }
 
 export async function getCurrentUser() {
   const { data } = await apiClient.get<User>('/api/auth/me')
+
   return data
+}
+
+export async function logoutRequest() {
+  await apiClient.post('/api/auth/logout')
 }

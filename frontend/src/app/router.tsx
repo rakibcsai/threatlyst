@@ -2,20 +2,21 @@ import { Navigate, createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
 import { LoginPage } from '../features/auth/LoginPage'
 import { ForbiddenPage } from '../pages/errors/ForbiddenPage'
+import { LazyAlertsRoute } from './LazyAlertsRoute'
+import { LazyApiKeysRoute } from './LazyApiKeysRoute'
+import { LazyAuditRoute } from './LazyAuditRoute'
 import { LazyDashboardRoute } from './LazyDashboardRoute'
 import { LazyEventsRoute } from './LazyEventsRoute'
-import { LazyAlertsRoute } from './LazyAlertsRoute'
 import { LazyIncidentsRoute } from './LazyIncidentsRoute'
 import { LazyMitreRoute } from './LazyMitreRoute'
-import { LazyThreatIntelligenceRoute } from './LazyThreatIntelligenceRoute'
 import { LazyNotificationsRoute } from './LazyNotificationsRoute'
 import { LazyReportsRoute } from './LazyReportsRoute'
-import { LazyAuditRoute } from './LazyAuditRoute'
-import { LazyApiKeysRoute } from './LazyApiKeysRoute'
 import { LazySystemHealthRoute } from './LazySystemHealthRoute'
+import { LazyThreatIntelligenceRoute } from './LazyThreatIntelligenceRoute'
+import { LazyUserSessionsRoute } from './LazyUserSessionsRoute'
+import { NotFoundRoute } from './NotFoundRoute'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RoleRoute } from './RoleRoute'
-import { NotFoundRoute } from './NotFoundRoute'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -62,6 +63,14 @@ export const router = createBrowserRouter([
             element: (
               <RoleRoute allowedRoles={['admin']}>
                 <LazyApiKeysRoute />
+              </RoleRoute>
+            ),
+          },
+          {
+            path: '/admin/sessions',
+            element: (
+              <RoleRoute allowedRoles={['admin']}>
+                <LazyUserSessionsRoute />
               </RoleRoute>
             ),
           },
