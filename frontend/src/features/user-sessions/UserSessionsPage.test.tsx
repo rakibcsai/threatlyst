@@ -128,35 +128,21 @@ describe('UserSessionsPage', () => {
 
     renderPage()
 
-    expect(
-      await screen.findByText('demo_analyst'),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('demo_analyst')).toBeInTheDocument()
+
+    expect(screen.getAllByText('203.0.113.10')).toHaveLength(2)
+
+    expect(screen.getAllByText('Google Chrome')).toHaveLength(2)
+
+    expect(screen.getAllByText(/Windows/)).toHaveLength(2)
 
     expect(
-      screen.getAllByText('203.0.113.10'),
+      screen.getAllByText('Kuala Lumpur, Kuala Lumpur, Malaysia'),
     ).toHaveLength(2)
 
-    expect(
-      screen.getAllByText('Google Chrome'),
-    ).toHaveLength(2)
+    expect(screen.getByText('viewer_user')).toBeInTheDocument()
 
-    expect(
-      screen.getAllByText(/Windows/),
-    ).toHaveLength(2)
-
-    expect(
-      screen.getAllByText(
-        'Kuala Lumpur, Kuala Lumpur, Malaysia',
-      ),
-    ).toHaveLength(2)
-
-    expect(
-      screen.getByText('viewer_user'),
-    ).toBeInTheDocument()
-
-    expect(
-      screen.getByText('logged out'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('logged out')).toBeInTheDocument()
   })
 
   it('shows concurrent sessions for the same account separately', async () => {
@@ -168,41 +154,23 @@ describe('UserSessionsPage', () => {
 
     renderPage()
 
-    expect(
-      await screen.findAllByText('demo_analyst'),
-    ).toHaveLength(2)
+    expect(await screen.findAllByText('demo_analyst')).toHaveLength(2)
 
-    expect(
-      screen.getByText('203.0.113.10'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('203.0.113.10')).toBeInTheDocument()
 
-    expect(
-      screen.getByText('198.51.100.20'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('198.51.100.20')).toBeInTheDocument()
 
-    expect(
-      screen.getByText('Google Chrome'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Google Chrome')).toBeInTheDocument()
 
-    expect(
-      screen.getByText('Safari'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Safari')).toBeInTheDocument()
   })
 
   it('renders an empty state', async () => {
-    server.use(
-      http.get(endpoint, () =>
-        HttpResponse.json([]),
-      ),
-    )
+    server.use(http.get(endpoint, () => HttpResponse.json([])))
 
     renderPage()
 
-    expect(
-      await screen.findByText(
-        'No user sessions yet',
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('No user sessions yet')).toBeInTheDocument()
   })
 
   it('renders an API error state', async () => {
@@ -210,8 +178,7 @@ describe('UserSessionsPage', () => {
       http.get(endpoint, () =>
         HttpResponse.json(
           {
-            detail:
-              'Session service unavailable.',
+            detail: 'Session service unavailable.',
           },
           {
             status: 503,
@@ -223,34 +190,21 @@ describe('UserSessionsPage', () => {
     renderPage()
 
     expect(
-      await screen.findByText(
-        'User sessions unavailable',
-      ),
+      await screen.findByText('User sessions unavailable'),
     ).toBeInTheDocument()
 
-    expect(
-      screen.getByText(
-        'Session service unavailable.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Session service unavailable.')).toBeInTheDocument()
   })
 
   it('allows administrators', async () => {
-    server.use(
-      http.get(endpoint, () =>
-        HttpResponse.json([activeSession]),
-      ),
-    )
+    server.use(http.get(endpoint, () => HttpResponse.json([activeSession])))
 
     renderRole('admin')
 
     expect(
-      await screen.findByRole(
-        'heading',
-        {
-          name: 'User Sessions',
-        },
-      ),
+      await screen.findByRole('heading', {
+        name: 'User Sessions',
+      }),
     ).toBeInTheDocument()
   })
 
@@ -260,9 +214,7 @@ describe('UserSessionsPage', () => {
       renderRole(role)
 
       expect(
-        await screen.findByText(
-          'Forbidden user sessions route',
-        ),
+        await screen.findByText('Forbidden user sessions route'),
       ).toBeInTheDocument()
     },
   )
@@ -270,10 +222,7 @@ describe('UserSessionsPage', () => {
   it('filters sessions by search text', async () => {
     server.use(
       http.get(endpoint, () =>
-        HttpResponse.json([
-          activeSession,
-          endedSession,
-        ]),
+        HttpResponse.json([activeSession, endedSession]),
       ),
     )
 
@@ -281,35 +230,22 @@ describe('UserSessionsPage', () => {
 
     const user = userEvent.setup()
 
-    await screen.findByText(
-      'demo_analyst',
-    )
+    await screen.findByText('demo_analyst')
 
     await user.type(
-      screen.getByLabelText(
-        'Search user sessions',
-      ),
+      screen.getByLabelText('Search user sessions'),
       'viewer_user',
     )
 
-    expect(
-      screen.getByText('viewer_user'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('viewer_user')).toBeInTheDocument()
 
-    expect(
-      screen.queryByText(
-        'demo_analyst',
-      ),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('demo_analyst')).not.toBeInTheDocument()
   })
 
   it('filters sessions by status', async () => {
     server.use(
       http.get(endpoint, () =>
-        HttpResponse.json([
-          activeSession,
-          endedSession,
-        ]),
+        HttpResponse.json([activeSession, endedSession]),
       ),
     )
 
@@ -317,28 +253,16 @@ describe('UserSessionsPage', () => {
 
     const user = userEvent.setup()
 
-    await screen.findByText(
-      'demo_analyst',
-    )
+    await screen.findByText('demo_analyst')
 
     await user.selectOptions(
-      screen.getByLabelText(
-        'Filter session status',
-      ),
+      screen.getByLabelText('Filter session status'),
       'logged_out',
     )
 
-    expect(
-      screen.getByText(
-        'viewer_user',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('viewer_user')).toBeInTheDocument()
 
-    expect(
-      screen.queryByText(
-        'demo_analyst',
-      ),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('demo_analyst')).not.toBeInTheDocument()
   })
 
   it('revokes an active session after confirmation', async () => {
@@ -346,167 +270,107 @@ describe('UserSessionsPage', () => {
     let revokeRequests = 0
 
     server.use(
-      http.get(endpoint, () =>
-        HttpResponse.json([session]),
-      ),
+      http.get(endpoint, () => HttpResponse.json([session])),
 
-      http.post(
-        `${endpoint}/${activeSession.session_id}/revoke`,
-        () => {
-          revokeRequests += 1
+      http.post(`${endpoint}/${activeSession.session_id}/revoke`, () => {
+        revokeRequests += 1
 
-          session = {
-            ...session,
-            status: 'revoked',
-            revoked: true,
-          }
+        session = {
+          ...session,
+          status: 'revoked',
+          revoked: true,
+        }
 
-          return HttpResponse.json({
-            message:
-              'Session revoked successfully.',
-            session_id:
-              session.session_id,
-            status: 'revoked',
-          })
-        },
-      ),
+        return HttpResponse.json({
+          message: 'Session revoked successfully.',
+          session_id: session.session_id,
+          status: 'revoked',
+        })
+      }),
     )
 
-    vi.spyOn(
-      window,
-      'confirm',
-    ).mockReturnValue(true)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     renderPage()
 
     const user = userEvent.setup()
 
     await user.click(
-      await screen.findByRole(
-        'button',
-        {
-          name: 'Revoke',
-        },
-      ),
+      await screen.findByRole('button', {
+        name: 'Revoke',
+      }),
     )
 
-    expect(
-      revokeRequests,
-    ).toBe(1)
+    expect(revokeRequests).toBe(1)
 
-    expect(
-      await screen.findByRole(
-        'status',
-      ),
-    ).toHaveTextContent(
-      activeSession.session_id.slice(
-        0,
-        8,
-      ),
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      activeSession.session_id.slice(0, 8),
     )
 
-    expect(
-      await screen.findByText(
-        'revoked',
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('revoked')).toBeInTheDocument()
   })
 
   it('does not revoke when confirmation is cancelled', async () => {
     let revokeRequests = 0
 
     server.use(
-      http.get(endpoint, () =>
-        HttpResponse.json([
-          activeSession,
-        ]),
-      ),
+      http.get(endpoint, () => HttpResponse.json([activeSession])),
 
-      http.post(
-        `${endpoint}/${activeSession.session_id}/revoke`,
-        () => {
-          revokeRequests += 1
+      http.post(`${endpoint}/${activeSession.session_id}/revoke`, () => {
+        revokeRequests += 1
 
-          return HttpResponse.json({
-            message:
-              'Session revoked successfully.',
-            session_id:
-              activeSession.session_id,
-            status: 'revoked',
-          })
-        },
-      ),
+        return HttpResponse.json({
+          message: 'Session revoked successfully.',
+          session_id: activeSession.session_id,
+          status: 'revoked',
+        })
+      }),
     )
 
-    vi.spyOn(
-      window,
-      'confirm',
-    ).mockReturnValue(false)
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     renderPage()
 
     const user = userEvent.setup()
 
     await user.click(
-      await screen.findByRole(
-        'button',
-        {
-          name: 'Revoke',
-        },
-      ),
+      await screen.findByRole('button', {
+        name: 'Revoke',
+      }),
     )
 
-    expect(
-      revokeRequests,
-    ).toBe(0)
+    expect(revokeRequests).toBe(0)
   })
 
   it('shows a failed revoke mutation', async () => {
     server.use(
-      http.get(endpoint, () =>
-        HttpResponse.json([
-          activeSession,
-        ]),
-      ),
+      http.get(endpoint, () => HttpResponse.json([activeSession])),
 
-      http.post(
-        `${endpoint}/${activeSession.session_id}/revoke`,
-        () =>
-          HttpResponse.json(
-            {
-              detail:
-                'Session revoke failed.',
-            },
-            {
-              status: 500,
-            },
-          ),
+      http.post(`${endpoint}/${activeSession.session_id}/revoke`, () =>
+        HttpResponse.json(
+          {
+            detail: 'Session revoke failed.',
+          },
+          {
+            status: 500,
+          },
+        ),
       ),
     )
 
-    vi.spyOn(
-      window,
-      'confirm',
-    ).mockReturnValue(true)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     renderPage()
 
     const user = userEvent.setup()
 
     await user.click(
-      await screen.findByRole(
-        'button',
-        {
-          name: 'Revoke',
-        },
-      ),
+      await screen.findByRole('button', {
+        name: 'Revoke',
+      }),
     )
 
-    expect(
-      await screen.findByRole(
-        'alert',
-      ),
-    ).toHaveTextContent(
+    expect(await screen.findByRole('alert')).toHaveTextContent(
       'The session could not be revoked.',
     )
   })

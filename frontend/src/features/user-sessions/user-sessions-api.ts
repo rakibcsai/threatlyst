@@ -1,11 +1,7 @@
 import { apiClient } from '../../lib/api-client'
 
 export type UserSessionStatus =
-  | 'active'
-  | 'idle'
-  | 'expired'
-  | 'logged_out'
-  | 'revoked'
+  'active' | 'idle' | 'expired' | 'logged_out' | 'revoked'
 
 export interface UserSession {
   session_id: string
@@ -37,9 +33,7 @@ export interface RevokeSessionResponse {
 }
 
 export async function getUserSessions() {
-  const { data } = await apiClient.get<UserSession[]>(
-    '/api/admin/sessions',
-  )
+  const { data } = await apiClient.get<UserSession[]>('/api/admin/sessions')
 
   return data
 }

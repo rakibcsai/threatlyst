@@ -19,10 +19,7 @@ import {
 } from '../operations/components/QueueStates'
 import { matchesOperationSearch } from '../operations/operation-utils'
 import type { UserSession } from './user-sessions-api'
-import {
-  useRevokeUserSession,
-  useUserSessions,
-} from './useUserSessions'
+import { useRevokeUserSession, useUserSessions } from './useUserSessions'
 
 function formatDateTime(value: string | null) {
   if (!value) {
@@ -98,9 +95,7 @@ export function UserSessionsPage() {
     (session) => session.status === 'active',
   ).length
 
-  const idleCount = data.filter(
-    (session) => session.status === 'idle',
-  ).length
+  const idleCount = data.filter((session) => session.status === 'idle').length
 
   const endedCount = data.filter((session) =>
     ['revoked', 'logged_out', 'expired'].includes(session.status),
@@ -288,9 +283,7 @@ export function UserSessionsPage() {
                       <th className="px-4 py-3 font-bold">Network</th>
                       <th className="px-4 py-3 font-bold">Login activity</th>
                       <th className="px-4 py-3 font-bold">Status</th>
-                      <th className="px-4 py-3 text-right font-bold">
-                        Action
-                      </th>
+                      <th className="px-4 py-3 text-right font-bold">Action</th>
                     </tr>
                   </thead>
 

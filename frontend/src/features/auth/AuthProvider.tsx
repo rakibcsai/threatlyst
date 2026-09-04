@@ -3,11 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { setUnauthorizedHandler } from '../../lib/api-client'
 import { authStorage } from '../../lib/auth-storage'
 import type { LoginCredentials, User } from '../../types/auth'
-import {
-  getCurrentUser,
-  loginRequest,
-  logoutRequest,
-} from './auth-api'
+import { getCurrentUser, loginRequest, logoutRequest } from './auth-api'
 import { AuthContext } from './auth-context'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -72,9 +68,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isLoading, login, logout],
   )
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

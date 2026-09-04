@@ -1,8 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  getUserSessions,
-  revokeUserSession,
-} from './user-sessions-api'
+import { getUserSessions, revokeUserSession } from './user-sessions-api'
 
 export const userSessionListKey = ['user-sessions'] as const
 
